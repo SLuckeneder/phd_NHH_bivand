@@ -10,7 +10,7 @@ args(classIntervals)
 
 ## ---- echo=TRUE--------------------------------------------------------------
 library(sf)
-olinda_sirgas2000 <- st_read("olinda_sirgas2000.gpkg")
+olinda_sirgas2000 <- st_read("ECS530_h20-main/ECS530_IV/olinda_sirgas2000.gpkg")
 (cI <- classIntervals(olinda_sirgas2000$DEPRIV, n=7, style="fisher"))
 
 
