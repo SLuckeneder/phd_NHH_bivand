@@ -1,0 +1,75 @@
+---
+title: "Project idea(s)"
+subtile: "test"
+author: "Sebastian Luckeneder"
+date: "10/12/2020"
+output: ioslides_presentation
+---
+ 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Topic of my PhD
+
+> 'Modelling the environmental and socio-economic impacts of global mining activities in a geospatial assessment framework'
+
+<p align="center">
+  <img width="400" src="img/motivation.png">
+</p>
+
+[FINEPRINT](www.fineprint.global) project
+
+## Global mining data
+
+<img src="img/mines_map.png" width="800">
+
+
+## 3 papers
+
+- **Global mining expansion into vulnerable ecosystems**
+  - Mostly descriptive spatial statistics
+  - Open tasks: only fine-tuning
+  
+  <img src="img/layers_3d.png" width="300">
+
+## 3 papers
+
+- **Global mining expansion into vulnerable ecosystems**
+  - Mostly descriptive spatial statistics
+  - Open tasks: only fine-tuning
+- **Mining and tropical deforestation**
+  - (together with Nikolas)
+  - A lot of data
+  - Straight-forward econometric setup
+  - Open tasks: visualisation, model comparison
+
+## 3 papers
+
+- **Global mining expansion into vulnerable ecosystems**
+  - Mostly descriptive spatial statistics
+  - Open tasks: only fine-tuning
+- **Mining and tropical deforestation**
+  - (together with Nikolas)
+  - A lot of data
+  - Straight-forward econometric setup
+  - Open tasks: visualisation, model comparison
+- **Mining and local economic growth**
+  - (Bayesian) Spatial econometric growth model
+  - Point data (mines) and polygons (socio-economic variables)
+
+## Mining and local economic growth
+
+<img src="img/bra.png" width="800">
+
+## Mining and local economic growth
+
+- Lesage and Fischer (2008) suggest a Spatial Durbin Model
+  $$y = \rho Wy + X\beta + WX \theta + u$$
+- Use, for now, simulated data
+- Play around with
+  - setting up required functions
+  - model selection
+  - spatial weights
+
+
