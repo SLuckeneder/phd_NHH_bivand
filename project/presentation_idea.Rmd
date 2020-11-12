@@ -2,7 +2,7 @@
 title: "Project idea(s)"
 subtile: "test"
 author: "Sebastian Luckeneder"
-date: "10/12/2020"
+date: "11/11/2020"
 output: ioslides_presentation
 ---
  
@@ -64,7 +64,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Mining and local economic growth
 
-- Lesage and Fischer (2008) suggest a Spatial Durbin Model
+- Lesage and Fischer (2008) suggest a Spatial Durbin Model for growth regressions
   $$y = \rho Wy + X\beta + WX \theta + u$$
 - Use, for now, simulated data
 - Play around with
