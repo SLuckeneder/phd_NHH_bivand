@@ -1,9 +1,9 @@
 ---
 title: "Project proposal"
-subtile: "test"
 author: "Sebastian Luckeneder"
 date: "11/13/2020"
 output: ioslides_presentation
+bibliography: references.bib
 ---
  
 ```{r setup, include=FALSE}
@@ -18,7 +18,6 @@ knitr::opts_chunk$set(echo = FALSE)
   <img width="400" src="img/motivation.png">
 </p>
 
-[FINEPRINT](https://www.fineprint.global) project
 
 ## Global mining data
 
@@ -33,10 +32,10 @@ knitr::opts_chunk$set(echo = FALSE)
 </p>
 
 ## Theory is ambiguous
-- Mining clusters `r emo::ji("slightly_smiling_face")` or mining enclaves `r emo::ji("unamused")`? (Arias 2014)
+- Mining clusters `r emo::ji("slightly_smiling_face")` or mining enclaves `r emo::ji("unamused")`? [@arias2014]
 - Empirically unchecked claims that mining would in general foster regional development.
 
-Research question: **Do these claims hold?**
+Research question: **Do Jair Bolsonaro's claims hold?**
 
 ## Empirical framework
 
@@ -47,10 +46,10 @@ Research question: **Do these claims hold?**
 ## Empirical framework {.smaller}
 
 - Point data (mines) and polygons (socio-economic variables)
-- (Bayesian) Spatial econometric growth model
-  - Built upon standard growth regressions, convergence across countries (e.g.  Barro 1991)
-  - Extended by mining data
-- Lesage and Fischer (2008) suggest a Spatial Durbin Model for growth regressions
+- Spatial econometric growth model in a Bayesian fashion [@lesage2009introduction]
+  - Built upon standard growth regressions, convergence across countries [@barro1991economic]
+  - Extended by mining data [@snl2020]
+- @lesage2008growth suggest a Spatial Durbin Model for growth regressions
 $$y = \rho Wy + X\beta + WX \theta + u$$
   - $y$ denotes the $n \times 1$ vector of regional economic growth rates, $n$ being the total number of regions
   - $X$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period
@@ -58,23 +57,109 @@ $$y = \rho Wy + X\beta + WX \theta + u$$
   - $k \times 1$ vectors $\beta$ and $\theta$ correspond to $X$ and $WX$ respectively
   - $\rho \in (-1, 1)$
   
-## Project feasibility
+## Course project feasibility
 
 - Use simulated data!
-- Play around with
+  - Original data is partly patchy and partly not freely available
+  - Knowing the DGP helps evaluating model performance
+- Address folowing tasks:
   - Setting up required functions
   - Model comparison
   - Spatial weights
   
-## Simulating the data
+## Simulating the data {.smaller}
 
 - Exhibit spatial dependence in y and X
-
-Figure of g and X1
-
 - Mines are posititively/not at all/negatively related to municpal GDP
 
-## Issues
+```{r packages, echo = FALSE, message=FALSE,  warning=FALSE}
+library(sf)
+library(dplyr)
+library(tidyr)
+library(tmap)
+```
+
+```{r data, echo = FALSE, eval = FALSE}
+gdp <- readxl::read_excel("ibge_data/gdp_munip_2010-2017.xls")
+colnames(gdp) <- c("ano", "codigo_regiao", "nome_regiao",
+"codigo_uf", "sigla_uf", "nome_uf",
+"cod_municipio", "nome_munic", "nome_metro",
+"codigo_meso", "nome_meso", "codigo_micro", "nome_micro",
+"codigo_reg_geo_imediata", "nome_reg_geo_imediata", "mun_reg_geo_imediata",
+"codigo_reg_geo_intermediaria", "nome_reg_geo_intermediaria", "mun_reg_geo_intermediaria",
+"codigo_concentracao_urbana", "nome_concentracao_urbana", "tipo_concentracao_urbana",
+"codigo_arranjo_populacional", "nome_arranjo_populacional",
+"hierarquia_urbana", "hierarquia_urbana_principais",
+"codigo_regiao_rural", "nome_regiao_rural", "regiao_rural_classificacao",
+"amazonia_legal", "semiarido", "cidade_de_sao_paulo",
+"vab_agropecuaria", "vab_industria", "vab_servicos_exclusivo", "vab_adm_publica", "vab_total",
+"impostos", "pib_total", #"populacao",
+"pib_per_capita",
+"atividade_vab1", "atividade_vab2", "atividade_vab3")
+dat <- sf::read_sf("ibge_data/geo/mun_base_2017.shp")
+```
+
+```{r data2, echo = TRUE, eval = FALSE, message=FALSE,  warning=FALSE}
+gdp <- gdp %>% dplyr::filter(ano %in% c(2015, 2017)) %>% 
+  dplyr::mutate(cod_municipio = as.character(cod_municipio))
+growth <- gdp %>% dplyr::select(cod_municipio, ano, pib_total) %>%
+  tidyr::spread(key = "ano", value = "pib_total") %>%
+  dplyr::mutate(y = (`2017` - `2015`) / `2015` * 100)
+agri <- gdp %>% dplyr::select(cod_municipio, ano, vab_agropecuaria) %>%
+  dplyr::filter(ano == "2015") %>%
+  dplyr::select(-ano) %>%
+  dplyr::rename(X1 = vab_agropecuaria)
+gdp <- dplyr::left_join(growth, agri, by = "cod_municipio")
+
+dat <- dat %>% dplyr::left_join(gdp, by = c("CD_GEOCMU" = "cod_municipio"))
+dat <- dat %>% sf::st_transform(crs = sf::st_crs("+proj=robin"))
+```
+
+```{r map, echo = TRUE, eval = FALSE, message=FALSE,  warning=FALSE}
+bra_map <- tmap::tm_shape(dat) + 
+  tmap::tm_facets(free.scales=TRUE, nrow = 1) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) + 
+  tmap::tm_fill(c("y", "X1"), n=8, style="quantile") +
+  tmap::tm_layout(legend.position = c("left", "bottom"),
+                  panel.labels=c("2015-2017 growth (%)", "VA in agriculture"))
+```
+
+```{r save, echo = FALSE, eval = FALSE}
+tmap::tmap_save(bra_map, filename = "img/bra_map.png")
+```
+
+## Simulating the data
+
+<p align="center">
+<img src="img/bra_map.png" width="900">
+</p>
+
+## Simulating the data {.smaller}
+
+```{r sim, echo = TRUE, eval = FALSE}
+n <- 10
+k <- 3
+
+# data
+X <- cbind(1, matrix(rnorm(n*k), ncol = k))
+W <- matrix(0, n, n)
+W[upper.tri(W)] <- rgamma(n*(n-1)/2, 0.2, 0.2)
+W <- 0.5 * (W + t(W)) # Make symmetric
+W <- W / rowSums(W)
+
+# parameters
+beta <- c(-2, 1, 0.5, 0)
+rho <- 0.3
+theta <- c(0, 0.7, 0.3, 0)
+
+# SAR
+y <- solve(diag(10L) - rho * W) %*% (X %*% beta)
+
+# SDM
+y <- solve(diag(10L) - rho * W) %*% ((X %*% beta) + (X %*% theta))
+```
+
+## Anticipated challenges
 - Real data is messy
   - Political borders change over time
   - Availability of control variables
@@ -104,6 +189,7 @@ Contact me: sebastian.luckeneder@wu.ac.at
 <img src="img/header.png" width="700">
 </p>
 
+## References
 
 
 
