@@ -44,4 +44,6 @@ img
 
 # large data
 project/ibge_data/geo
+project/ibge_data/geobr
 project/ibge_data/temp
+
