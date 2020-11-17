@@ -1,0 +1,54 @@
+---
+title: "ESC530 Analysing Spatial Data: Project Proposal"
+author: "Sebastian Luckeneder"
+date: "17/11/2020"
+output: html_document
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Please note that I would like to receive credits for this course. I will hence hand in a full project report by 8 January 2021. Proposal and enclosed slides may be shared with colleagues.
+
+# Mining and regional GDP growth - the Brazilian case 
+
+## Research interest (beyond the course project)
+
+It is well-known that mining activities relate to hazardous environmental and social consequences. And yet, mining is often related to 'development' as a constitutional starting point of a series of economic and social changes. This proposed study deals with development in the sense of regional GDP growth (and I am aware that development goes beyond GDP growth), asking whether mining activities relate to the local GDP of mining municipalities and their surroundings. 
+
+The effects of mining on the economy have been widely debated, and theoretical channels have been discussed, from which we can draw ambiguous conclusions. On the one hand, there is the concept of 'mining clusters', which is centred on the idea that linkages between multinational corporations and local firms, local employment creation and knowledge spillovers are drivers of regional development [@arias2014]. On the other hand, the emergence of 'enclave economies' seems just as reasonable, because rather than being related to the creation of local employment, the large-scale natural resource development in the mining sector is highly capital-intensive. It requires significant funds for exploration, energy infrastructure, machinery, transportation networks and construction [@emel2008risky]. Also, mining increasingly becomes technologically intensive [@humphreys2007introduction]. Therefore, it is likely that employment for low-skilled workers is only short-term during the construction phase, while mining in the long-run offers fewer positions, which are taken by high-skilled (and potentially foreign) employees [@arias2014]. Furthermore, capital-intensive resources are associated with a higher likelihood of civil conflict than labour-intensive resources (such as biomass) [@van2011natural], which might hinder economic growth. 
+
+My study will concentrate on mining expansion in Brazil. The country's president, Jair Bolsonaro, is currently on the verge of opening peripheral indigenous and protected land for mining [@siqueira2020proposed]. He constructs an old fashioned development narrative, which accepts the destruction of ecosystems, most importantly the Brazilian Amazon, and the extinction of indigenous populations, in the name of development [@hope2019brazilian]. While it is evident that the policy path taken here will threaten people and unique ecosystems  [@siqueira2020proposed; @rorato2020brazilian], there is no clear empirical evidence if these extractive activities will foster local economic growth. Such a link is, however, crucial to the president's line of argumentation, stating that environmental degradation and the destruction of indigenous livelihoods were simply the costs of such a development, from which also local communities would benefit [@branford2019brazil]. My research question is therefore, whether mining acivities in Brazil can be related to the growth of local, i.e. municipality-level, GDP.
+
+I want to challenge the claim that mining positively affects both mining regions and, via spillover effects, their neighbours in terms of economic growth. For that, I intend employing a spatial econometric growth model as motivated by @lesage2008growth. Such an empirical framework will enable relating detailed mine-specific data on extraction intensity to regional economic impacts. It will take spatial autocorrelation into consideration and will allow the estimation of spillover effects between municipalities.
+
+## Project outline
+
+### Brazilian municipality-level data and mine locations
+
+First, for getting a clearer picture about the spatial relations of the variables of interest, I want to assess how GDP growth rates, potentially important explanatory variables, and mining locations are distributed across Brazil. 
+
+Socio-economic data at the municipality-level can be accessed from the Brazilian Institute of Geography and Statistics [@ibge2020]. As an initial step, I will only use 2015-2017 data. Due to a number of changes of political borders and entities in the past, the creation of longer time series (e.g. for constructing growth rates) would require more data wrangling than feasible within the scope of the project.
+
+The locations of mining sites can be obtained from S&P's SNL Metals and Mining Database [@snl2020]. Since this database is not freely available and since there are clear copyright restrictions by SNL, I will indicate the existence of a mine within a municipality without using exact coordinates or any other information on the mining property.
+
+### Proposal of a growth model by the use of simulated data
+
+Typical growth regressions, as motivated in the literature on convergence across countries, regress growth rates of countries or regions on their capital stock (usually GDP) at the initial period as well as a number of further determinants of growth [@barro1991economic]. Typically, these include information such as on population growth, human capital stock, sectoral structure and employment [@crespo2014determinants]. As these variables likely exhibit spatial dependence, @lesage2008growth propose following Spatial Durbin Model (SDM) for growth regressions:
+
+$$\boldsymbol{y} = \rho \boldsymbol{Wy} + \boldsymbol{X\beta} + \boldsymbol{WX \theta} + \boldsymbol{u}$$
+In my case, the dependent variable $\boldsymbol{y}$ denotes an $n \times 1$ vector of regional economic growth rates for $n = 1, \dots ,N$ Brazilian municipalities. $\boldsymbol{X}$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period. $\mathbf{W}$ denotes the so-called spatial weights or connectivity matrix, allowing for parsimonious treatment of spatial dependence [@anselin2013spatial]. It is an $n \times n$, non-negative, row-standardised matrix with $w_{ii} = 0$. Its elements are used to specify the spatial dependence structure among the observations, i.e. $w_{ij} > 0$ if region $j$ is in a neighbourhood relationship with region $i$ ($i, j = 1, \dots, n$). The $k \times 1$ vectors $\boldsymbol{\beta}$ and $\boldsymbol{\theta}$ correspond to $\boldsymbol{X}$ and $\boldsymbol{WX}$ respectively, and $\rho \in (-1, 1)$ captures the strength of spatial autocorrelation. The random error term $\boldsymbol{u}$ is assumed to be constant and normally distributed.
+
+The idea of this exercise is to set up R code for estimating spatial models in a Bayesian fashion [@lesage2009introduction]. It is intended to prepare the functions for the SDM as well as other variations of spatial models such as the spatial autoregressive (SAR), spatial error (SEM), and spatial lag model (SLX).
+
+Instead of directly utilising 'real' data of Brazilian municipalities and mines, I will make this course project a simulation study. This has the following advantages:
+
+- Simulating spatially autocorrelated data is a useful exercise for understanding spatial data.
+- Simulated data implies knowing the underlying data generating process (DGP). This is helpful for evaluating how the models perform.
+- SNL data are unfortunately not freely available, and socio-economic municipality data may require arduous data wrangling. Simulating the data, in turn, allows full and easy reproducability for everyone.
+
+I will hence develop and apply code for spatial econometric models on simulated data, first in order to check if the codes are working correctly and second to compare how the models perform. Note that the course project will be a preliminary step for a more extensive paper idea. It will help sorting out potential errors in the code and secure correct application on real data at a later stage. Furthermore, it will help understanding misspecifications in spatial econometric models in an applied and practical way. 
+
+## References
