@@ -2,8 +2,11 @@
 title: "Project proposal"
 author: "Sebastian Luckeneder"
 date: "11/13/2020"
-output: ioslides_presentation
+output:
+  ioslides_presentation: default
+  beamer_presentation: default
 bibliography: references.bib
+widescreen: true
 ---
  
 ```{r setup, include=FALSE}
