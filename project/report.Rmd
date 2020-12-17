@@ -1,0 +1,389 @@
+---
+title: 'ESC530 Analysing Spatial Data: Project Report'
+author: "Sebastian Luckeneder"
+date: "15/12/2020"
+output:
+  html_document: default
+  pdf_document: default
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width=12, fig.height=8)
+```
+
+# Mining and regional GDP growth - the Brazilian case 
+
+## Research interest (beyond this course project)
+
+It is well-known that mining activities relate to hazardous environmental and social consequences. And yet, mining is often related to 'development' as a constitutional starting point of a series of economic and social changes. This proposed study deals with development in the sense of regional GDP growth (and I am aware that development goes beyond GDP growth), asking whether mining activities relate to the local GDP of mining municipalities and their surroundings. 
+
+The effects of mining on the economy have been widely debated, and theoretical channels have been discussed, from which we can draw ambiguous conclusions. On the one hand, there is the concept of 'mining clusters', which is centred on the idea that linkages between multinational corporations and local firms, local employment creation and knowledge spillovers are drivers of regional development [@arias2014]. On the other hand, the emergence of 'enclave economies' seems just as reasonable, because rather than being related to the creation of local employment, the large-scale natural resource development in the mining sector is highly capital-intensive. It requires significant funds for exploration, energy infrastructure, machinery, transportation networks and construction [@emel2008risky]. Also, mining increasingly becomes technologically intensive [@humphreys2007introduction]. Therefore, it is likely that employment for low-skilled workers is only short-term during the construction phase, while mining in the long-run offers fewer positions, which are taken by high-skilled (and potentially foreign) employees [@arias2014]. Furthermore, capital-intensive resources are associated with a higher likelihood of civil conflict than labour-intensive resources (such as biomass) [@van2011natural], which might hinder economic growth. 
+
+My study will concentrate on mining expansion in Brazil. The country's president, Jair Bolsonaro, is currently on the verge of opening peripheral indigenous and protected land for mining [@siqueira2020proposed]. He constructs an old fashioned development narrative, which accepts the destruction of ecosystems, most importantly the Brazilian Amazon, and the extinction of indigenous populations, in the name of development [@hope2019brazilian]. While it is evident that the policy path taken here will threaten people and unique ecosystems  [@siqueira2020proposed; @rorato2020brazilian], there is no clear empirical evidence if these extractive activities will foster local economic growth. Such a link is, however, crucial to the president's line of argumentation, stating that environmental degradation and the destruction of indigenous livelihoods were simply the costs of such a development, from which also local communities would benefit [@branford2019brazil]. My research question is therefore, whether mining acivities in Brazil can be related to the growth of local, i.e. municipality-level, GDP.
+
+Insights from the talk with Paolo: Paragraph on the two worlds of mining in Brazil: large-scale and artisanal mining. Minas Gerais vs. opening indigenous land. Ambiguity also how indigenous communities deal with it. 
+
+I want to challenge the claim that mining positively affects both mining regions and, via spillover effects, their neighbours in terms of economic growth. For that, I intend employing a spatial econometric growth model as motivated by @lesage2008growth. Such an empirical framework will enable relating detailed mine-specific data on extraction intensity to regional economic impacts. It will take spatial autocorrelation into consideration and will allow the estimation of spillover effects between municipalities.
+
+## Exploring the data
+
+First, for getting a clearer picture about the spatial relations of the variables of interest, I assess how mining operations, GDP growth rates, and potentially important explanatory variables are distributed across Brazil.
+
+As the basis for all maps, I access shapefiles from the Brazilian Institute of Geography and Statistics [@ibge2020] for national borders, states, and municipalities. I utilised the `geobr` package, selected the year 2017 and transformed the coordinate reference system to WGS84:
+
+```{r base, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(sf)
+
+library(geobr)
+print(geobr::list_geobr(), n = 5)
+
+yr <- 2017
+
+if(!file.exists(paste0("ibge_data/geobr/base_nat_", yr, ".shp"))){
+  base_nat <- geobr::read_country(year = yr, simplified = FALSE, showProgress = TRUE) 
+  sf::st_write(base_nat, paste0("ibge_data/geobr/base_nat_", yr, ".shp"))
+} else {
+  base_nat <- sf::read_sf("ibge_data/geobr/base_nat_2017.shp")
+}
+
+if(!file.exists(paste0("ibge_data/geobr/base_sta_", yr, ".shp"))){
+  base_sta <- geobr::read_state(year = yr, simplified = FALSE, showProgress = TRUE)
+  sf::st_write(base_sta, paste0("ibge_data/geobr/base_sta_", yr, ".shp"))
+} else {
+  base_sta <- sf::read_sf("ibge_data/geobr/base_sta_2017.shp")
+}
+
+if(!file.exists(paste0("ibge_data/geobr/base_mun_", yr, ".shp"))){
+  base_mun <- geobr::read_municipality(code_muni = "all",year = yr, simplified = FALSE, showProgress = TRUE) 
+  sf::st_write(base_mun, paste0("ibge_data/geobr/base_mun_", yr, ".shp"))
+} else {
+  base_mun <- sf::read_sf("ibge_data/geobr/base_mun_2017.shp")
+}
+
+base_nat <- base_nat %>% sf::st_transform(crs = sf::st_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+base_sta <- base_sta %>% sf::st_transform(crs = sf::st_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+base_mun <- base_mun %>% dplyr::mutate(code_mn = as.character(code_mn)) %>%
+  sf::st_transform(crs = sf::st_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
+
+```
+
+### Mine locations
+
+The locations of mining sites can be obtained from S&P's SNL Metals and Mining Database [@snl2020]. This database is not freely available and there are clear copyright restrictions by SNL. Therefore, I pre-calculated the number of active mines within each municipality (using `sf::st_join(., join = "st_intersects")` for merging the point data of mine locations with the municipality polygons and then grouping and summarising by municipality ID) and directly access this ready-to-use data:
+
+```{r mines, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+bra_mines <- sf::read_sf("mine_data/bra_mines.shp")
+```
+
+Let's draw a map:
+
+```{r p.mines, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+library(tmap)
+
+bra_mines <- bra_mines %>%
+  dplyr::mutate(mine_count = ifelse(mine_count == 0, NA, mine_count))
+
+regs <- c("MG", "AC", "AM", "RO", "RR", "AP", "PA", "TO", "MT")
+
+tmap::tm_shape(bra_mines) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) +
+  tmap::tm_fill(col = "mine_count", style = "pretty", as.count = TRUE, 
+                colorNA = "white", textNA = "0",
+                palette = "-viridis",
+                title = "No. of active mines (n = 299)", legend.reverse = TRUE) +
+tmap::tm_shape(base_sta %>% dplyr::filter(abbrv_s %in% regs)) +
+  tmap::tm_borders(lwd=1) +
+tmap::tm_shape(base_nat) +
+  tmap::tm_borders(lwd=2) +
+tmap::tm_layout(legend.position = c("left", "bottom"))
+```
+
+Move to paragraph on the two worlds of mining in Brazil: large-scale and artisanal mining. Minas Gerais vs. opening indigenous land. Ambiguity also how indigenous communities deal with it. Zoom into MG and north + overlap with protected areas
+
+```{r pa, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+wdpa_bra <- sf::read_sf("wdpa_data/wdpa_bra.shp")
+```
+
+```{r pminesmg, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+library(stringr)
+
+# Minas Gerais
+regs <- c("MG")
+regs_wdpa <- stringr::str_subset(unique(wdpa_bra$SUB_LOC), paste(regs, collapse = "|"))
+
+# union for nicer plots, export because st_union takes time
+if (! file.exists("wdpa_data/wdpa_bra_clean_MG_indig.shp")){
+  wdpa_bra_clean_MG_indig <- wdpa_bra %>% dplyr::filter(SUB_LOC %in% regs_wdpa & TYPE == "Indigenous") %>% sf::st_union()
+  wdpa_bra_clean_MG_other <- wdpa_bra %>% dplyr::filter(SUB_LOC %in% regs_wdpa & TYPE == "other") %>% sf::st_union()
+  sf::st_write(wdpa_bra_clean_MG_indig, dsn = "wdpa_data/wdpa_bra_clean_MG_indig.shp", delete_dsn = TRUE)
+  sf::st_write(wdpa_bra_clean_MG_other, dsn = "wdpa_data/wdpa_bra_clean_MG_other.shp", delete_dsn = TRUE)
+} else {
+  wdpa_bra_clean_MG_indig <- sf::read_sf("wdpa_data/wdpa_bra_clean_MG_indig.shp")
+  wdpa_bra_clean_MG_other <- sf::read_sf("wdpa_data/wdpa_bra_clean_MG_other.shp")
+}
+
+wdpa_bra_clean_MG <- rbind(wdpa_bra_clean_MG_indig %>% dplyr::mutate("TYPE" = "Indigenous"), 
+                           wdpa_bra_clean_MG_other %>% dplyr::mutate("TYPE" = "Other"))
+
+tmap::tm_shape(bra_mines %>% dplyr::filter(abbrv_s %in% regs)) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) +
+  tmap::tm_fill(col = "mine_count", n = 4, style = "pretty", as.count = TRUE, 
+                colorNA = "white", textNA = "0",
+                palette = "-viridis",
+                title = "No. of active mines (n = 96)", legend.reverse = TRUE) +
+tmap::tm_shape(wdpa_bra_clean_MG) +
+  tmap::tm_fill(col = "TYPE", palette = c("red", "darkgrey"), alpha=0.25, title = "Protected area") +
+tmap::tm_shape(base_sta %>% dplyr::filter(abbrv_s %in% regs)) +
+  tmap::tm_borders(lwd=2) +
+tmap::tm_layout(main.title = "Minas Gerais", legend.position = c("left", "top")) + 
+tmap::tm_scale_bar(position=c("right", "bottom"))
+```
+
+```{r pminesnorth, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+# North Region + Mato Grosso
+regs <- c("AC", "AM", "RO", "RR", "AP", "PA", "TO", "MT")
+regs_wdpa <- str_subset(unique(wdpa_bra$SUB_LOC), paste(regs, collapse = "|"))
+
+# union for nicer plots because some areas overlap, store because st_union takes time
+if (! file.exists("wdpa_data/wdpa_bra_clean_north_indig.shp")){
+  wdpa_bra_clean_north_indig <- wdpa_bra %>% dplyr::filter(SUB_LOC %in% regs_wdpa & TYPE == "Indigenous") %>% sf::st_union()
+  wdpa_bra_clean_north_other <- wdpa_bra %>% dplyr::filter(SUB_LOC %in% regs_wdpa & TYPE == "other") %>% sf::st_union()
+  sf::st_write(wdpa_bra_clean_north_indig, dsn = "wdpa_data/wdpa_bra_clean_north_indig.shp", delete_dsn = TRUE)
+  sf::st_write(wdpa_bra_clean_north_other, dsn = "wdpa_data/wdpa_bra_clean_north_other.shp", delete_dsn = TRUE)
+} else {
+  wdpa_bra_clean_north_indig <- sf::read_sf("wdpa_data/wdpa_bra_clean_north_indig.shp")
+  wdpa_bra_clean_north_other <- sf::read_sf("wdpa_data/wdpa_bra_clean_north_other.shp")
+}
+
+wdpa_bra_clean_north <- rbind(wdpa_bra_clean_north_indig %>% dplyr::mutate("TYPE" = "Indigenous"), 
+                           wdpa_bra_clean_north_other %>% dplyr::mutate("TYPE" = "Other"))
+
+tmap::tm_shape(bra_mines %>% dplyr::filter(abbrv_s %in% regs)) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) +
+  tmap::tm_fill(col = "mine_count", n = 4, style = "pretty", as.count = TRUE, 
+                colorNA = "white", textNA = "0", palette = "-viridis",
+                title = "No. of active \nmines (n = 103)", legend.reverse = TRUE) +
+tmap::tm_shape(wdpa_bra_clean_north) +
+  tmap::tm_fill(col = "TYPE", palette = c("red", "darkgrey"), alpha=0.25, title = "Protected area") +
+tmap::tm_shape(base_sta %>% dplyr::filter(abbrv_s %in% regs)) +
+  tmap::tm_borders(lwd=2) +
+tmap::tm_layout(main.title = "North Region and Mato Grosso", legend.position = c("left", "bottom"), legend.stack = "horizontal") + 
+tmap::tm_scale_bar(position=c("right", "bottom"))
+```
+
+### Municipality statistics
+
+Socio-economic data at the municipality-level can be accessed from the Brazilian Institute of Geography and Statistics [@ibge2020]. As an initial step, I will only use 2015-2017 data. Due to a number of changes of political borders and entities in the past, the creation of longer time series (e.g. for constructing growth rates) would require more data wrangling than feasible within the scope of the project.
+
+#### GDP and growth rates
+
+IBGE Data, 
+GDP 2015, GDP per capita 2015
+GDP growth 2015-2017, per capita growth 2015-2017
+
+```{r gdpdat, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
+dat_ibge <- readxl::read_excel("ibge_data/gdp_munip_2010-2017.xls")
+colnames(dat_ibge) <- c("ano", "codigo_regiao", "nome_regiao",
+"codigo_uf", "sigla_uf", "nome_uf",
+"cod_municipio", "nome_munic", "nome_metro",
+"codigo_meso", "nome_meso", "codigo_micro", "nome_micro",
+"codigo_reg_geo_imediata", "nome_reg_geo_imediata", "mun_reg_geo_imediata",
+"codigo_reg_geo_intermediaria", "nome_reg_geo_intermediaria", "mun_reg_geo_intermediaria",
+"codigo_concentracao_urbana", "nome_concentracao_urbana", "tipo_concentracao_urbana",
+"codigo_arranjo_populacional", "nome_arranjo_populacional",
+"hierarquia_urbana", "hierarquia_urbana_principais",
+"codigo_regiao_rural", "nome_regiao_rural", "regiao_rural_classificacao",
+"amazonia_legal", "semiarido", "cidade_de_sao_paulo",
+"vab_agropecuaria", "vab_industria", "vab_servicos_exclusivo", "vab_adm_publica", "vab_total",
+"impostos", "pib_total", #"populacao",
+"pib_per_capita",
+"atividade_vab1", "atividade_vab2", "atividade_vab3")
+```
+
+```{r gdpmap, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
+dat_gdp <- dat_ibge %>% dplyr::filter(ano == 2015) %>% 
+  dplyr::mutate(cod_municipio = as.character(cod_municipio)) %>% 
+  dplyr::mutate(pib_total = pib_total / 1000000)
+
+dat_gdp <- base_mun %>% dplyr::left_join(dat_gdp, by = c("code_mn" = "cod_municipio"))
+
+dat_growth <- dat_ibge %>% dplyr::filter(ano %in% c(2015, 2017)) %>% 
+  dplyr::select(cod_municipio, ano, pib_per_capita) %>%
+  tidyr::spread(key = "ano", value = "pib_per_capita") %>%
+  dplyr::mutate(g_cap = (`2017` - `2015`) / `2015` * 100,
+                cod_municipio = as.character(cod_municipio)) %>%
+  dplyr::select(cod_municipio, g_cap)
+
+dat_gdp <- dat_gdp %>% 
+  dplyr::left_join(dat_growth, by = c("code_mn" = "cod_municipio"))
+
+tmap::tm_shape(dat_gdp) + 
+  tmap::tm_facets(nrow = 1) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) + 
+  tmap::tm_fill(col = c("pib_per_capita", "g_cap"), n=8, style="quantile", palette = "-magma", title = "") +
+  tmap::tm_layout(legend.position = c("left", "bottom"),
+                  panel.labels=c("2015 GDP (per capita, BRL)", "2015-2017 growth rate (%)"))
+```
+
+
+#### HDI 
+
+#### Population and growth rates
+
+#### Sectoral structure
+
+```{r sectormap, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
+dat_sect <- dat_ibge %>% dplyr::filter(ano == 2015) %>% 
+  dplyr::mutate(cod_municipio = as.character(cod_municipio)) %>% 
+  dplyr::mutate(vab_agropecuaria = ifelse(vab_agropecuaria < 0, 0, vab_agropecuaria)) %>%
+  dplyr::mutate(vab_agropecuaria_perc = vab_agropecuaria / vab_total,
+                vab_industria_perc = vab_industria / vab_total,
+                vab_servicos_exclusivo_perc = vab_servicos_exclusivo / vab_total,
+                vab_adm_publica_perc = vab_adm_publica / vab_total)
+
+dat_sect <- base_mun %>% dplyr::left_join(dat_sect, by = c("code_mn" = "cod_municipio"))
+
+tmap::tm_shape(dat_sect) + 
+  tmap::tm_facets(nrow = 2) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) + 
+  tmap::tm_fill(col = c("vab_agropecuaria_perc", "vab_industria_perc", "vab_servicos_exclusivo_perc", "vab_adm_publica_perc"), 
+                n=8, style="quantile", title = "", palette = "-magma",) +
+  tmap::tm_layout(legend.position = c("left", "bottom"),
+                  panel.labels=c("2015 GVA acgriculture (%)", "2015 GVA industry (%)", "2015 GVA services (%)", "2015 GVA public sector (%)"))
+```
+
+#### Employment
+
+#### Human capital
+
+
+
+
+## Spatial connectivity
+
+Use functions in spdep to define neighbours and then test for global and local spatial autocorrelation
+
+### W
+
+W is important for imposing spatial structure in a parsimonious way.
+
+Some variations: contiguity, 5 nearest, distance bound
+
+Decreasing functions of distance: heavy, bad for modelling later on
+
+Lets start with queen contiguity, where neighbourhodd is defined by sharing borders + interpretation
+
+The average number of neighbors (adjacent polygons) is 5.9, 9 polygons have only 1 neighbor and the most connected municipality borders 23 neighbors. 2 municipalities are islands and hence, according to this definition, have no neighbours. Since ..., I exclude them from the data.
+
+```{r neighboursq, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+library(spdep)
+
+nb_q <- spdep::poly2nb(base_mun, queen=TRUE)
+summary(nb_q)
+
+# remove islands
+base_mun <- base_mun[-c(1526, 3500),]
+nb_q <- spdep::poly2nb(base_mun, queen=TRUE)
+
+plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
+coords <- sf::st_centroid(sf::st_geometry(base_mun), of_largest_polygon=TRUE)
+plot(nb_q, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.5)
+```
+
+Alternatively: k = 5 nearest neighbours using `spdep::knearneigh` + interpretation
+
+```{r neighboursn, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
+nb_5nnb <- spdep::knearneigh(coords, k=5)
+nb_5nnb <- spdep::knn2nb(nb_5nnb, sym=F)
+plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
+plot(nb_5nnb, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.5)
+```
+
+Another option: distance bound, where I make sure that each municipality has at least 1 neighbour using `spdep::knearneigh(k=1)` first and extracting maximum distance, followed by `spdep::dnearneigh` using this distance as the upper bound. Interpretation: this is not so good.
+
+```{r neighboursd, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+nb_1nnb <- spdep::knearneigh(coords, k=1)
+nb_1nnb <- spdep::knn2nb(nb_1nnb, sym=F)
+maxdist <- max(unlist(spdep::nbdists(nb_1nnb, coords=coords)))
+
+nb_dist <- spdep::dnearneigh(coords, d1=0, d2=maxdist)
+plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
+plot(nb_dist, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.5)
+```
+
+Therefore, I will continue with k=5 nnb. Queen contiguity and other k can be used for robustness checks at a later stage.
+
+A note on dimension: weights and observations must fit. Exclude NA entries (2) from the data (which already excludes islands) and re-calculate weights.
+
+```{r dims, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+
+dat_gdp <- dat_gdp[!is.na(dat_gdp$pib_per_capita),]
+dat_sect <- dat_sect[!is.na(dat_sect$vab_agropecuaria_perc),]
+
+coords <- sf::st_centroid(sf::st_geometry(dat_gdp), of_largest_polygon=TRUE)
+nb_5nnb <- spdep::knearneigh(coords, k=5)
+nb_5nnb <- spdep::knn2nb(nb_5nnb, sym=F)
+
+```
+
+### Spatial autocorrelation
+
+Some sentences on spatial AC: What is it, why is it important?
+
+Similar observations are closer to each other.
+
+In a regression framework...
+
+From examining the maps above, we can already guess that clustering is going on. But we also want to test for spatial autocorellation. This can be done by.. For doing so, we make use of our above defined definition of neighbourhood.
+
+row standardisation style="W"
+
+Global spatial autocorrelation
+
+```{r moransi, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+
+lwW <- spdep::nb2listw(nb_5nnb, style="W")
+
+out <- dplyr::bind_rows(
+  broom::tidy(spdep::moran.test(dat_gdp$pib_per_capita, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
+  broom::tidy(spdep::moran.test(dat_gdp$g_cap, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
+  broom::tidy(spdep::moran.test(dat_sect$vab_agropecuaria_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
+  broom::tidy(spdep::moran.test(dat_sect$vab_industria_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
+  broom::tidy(spdep::moran.test(dat_sect$vab_servicos_exclusivo_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
+  broom::tidy(spdep::moran.test(dat_sect$vab_adm_publica_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5])
+names(out)[1:3] <- c("Moran's I", "Expectation", "Variance")
+out <- dplyr::bind_cols("Variable" = c("2015 GDP (per capita, BRL)", "2015-2017 growth rate (%)", "2015 GVA acgriculture (%)", 
+                                       "2015 GVA industry (%)", "2015 GVA services (%)", "2015 GVA public sector (%)"), out); out
+
+```
+
+```{r moranplots, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE, fig.show="hold", out.width="0.49\\linewidth"}
+
+spdep::moran.plot(dat_gdp$pib_per_capita, listw=lwW)
+spdep::moran.plot(dat_gdp$pib_per_capita, listw=lwW)
+
+```
+
+Local spatial autocorrelation?
+
+## Proposal of a growth model by the use of simulated data
+
+Typical growth regressions, as motivated in the literature on convergence across countries, regress growth rates of countries or regions on their capital stock (usually GDP) at the initial period as well as a number of further determinants of growth [@barro1991economic]. Typically, these include information such as on population growth, human capital stock, sectoral structure and employment [@crespo2014determinants]. As these variables likely exhibit spatial dependence, @lesage2008growth propose following Spatial Durbin Model (SDM) for growth regressions:
+
+$$\boldsymbol{y} = \rho \boldsymbol{Wy} + \boldsymbol{X\beta} + \boldsymbol{WX \theta} + \boldsymbol{u}$$
+In my case, the dependent variable $\boldsymbol{y}$ denotes an $n \times 1$ vector of regional economic growth rates for $n = 1, \dots ,N$ Brazilian municipalities. $\boldsymbol{X}$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period. $\mathbf{W}$ denotes the so-called spatial weights or connectivity matrix, allowing for parsimonious treatment of spatial dependence [@anselin2013spatial]. It is an $n \times n$, non-negative, row-standardised matrix with $w_{ii} = 0$. Its elements are used to specify the spatial dependence structure among the observations, i.e. $w_{ij} > 0$ if region $j$ is in a neighbourhood relationship with region $i$ ($i, j = 1, \dots, n$). The $k \times 1$ vectors $\boldsymbol{\beta}$ and $\boldsymbol{\theta}$ correspond to $\boldsymbol{X}$ and $\boldsymbol{WX}$ respectively, and $\rho \in (-1, 1)$ captures the strength of spatial autocorrelation. The random error term $\boldsymbol{u}$ is assumed to be constant and normally distributed.
+
+The idea of this exercise is to set up R code for estimating spatial models in a Bayesian fashion [@lesage2009introduction]. It is intended to prepare the functions for the SDM as well as other variations of spatial models such as the spatial autoregressive (SAR), spatial error (SEM), and spatial lag model (SLX).
+
+Instead of directly utilising 'real' data of Brazilian municipalities and mines, I will make this course project a simulation study. This has the following advantages:
+
+- Simulating spatially autocorrelated data is a useful exercise for understanding spatial data.
+- Simulated data implies knowing the underlying data generating process (DGP). This is helpful for evaluating how the models perform.
+- SNL data are unfortunately not freely available, and socio-economic municipality data may require arduous data wrangling. Simulating the data, in turn, allows full and easy reproducability for everyone.
+
+I will hence develop and apply code for spatial econometric models on simulated data, first in order to check if the codes are working correctly and second to compare how the models perform. Note that the course project will be a preliminary step for a more extensive paper idea. It will help sorting out potential errors in the code and secure correct application on real data at a later stage. Furthermore, it will help understanding misspecifications in spatial econometric models in an applied and practical way. 
+
+## References
