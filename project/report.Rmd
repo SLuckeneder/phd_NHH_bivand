@@ -180,13 +180,31 @@ Socio-economic data at the municipality-level can be accessed from the Brazilian
 
 #### GDP and growth rates
 
+Millenium started with high growth rates. Per capita GDP rose from 2.800 USD in 2002 to 13.200 USD in 2011. Economic crisis since 2014. 
+BRL stable since currency crises in the 1990s, but compared to EUR or USD at high inflation rates (5-10%). This partly explains the low 2002 numbers.
+
+
 IBGE Data, 
 GDP 2015, GDP per capita 2015
 GDP growth 2015-2017, per capita growth 2015-2017
 
 ```{r gdpdat, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
-dat_ibge <- readxl::read_excel("ibge_data/gdp_munip_2010-2017.xls")
-colnames(dat_ibge) <- c("ano", "codigo_regiao", "nome_regiao",
+dat_ibge_1 <- readxl::read_excel("ibge_data/gdp_munip_1999-2012.xlsx")
+colnames(dat_ibge_1) <- c("ano", 
+"codigo_uf", "nome_uf",
+"cod_municipio", "nome_munic", "nome_metro",
+"codigo_meso", "nome_meso", "codigo_micro", "nome_micro",
+"vab_agropecuaria", "vab_industria", 
+"vab_servicos_exclusivo", "vab_adm_publica", 
+"impostos", "pib_total",
+"pop_last", "pib_per_capita_last")
+dat_ibge_1 <- dat_ibge_1 %>%
+  dplyr::filter(ano < 2010) %>%
+  dplyr::mutate(cod_municipio = as.character(cod_municipio),
+                ano = as.numeric(ano)) 
+
+dat_ibge_2 <- readxl::read_excel("ibge_data/gdp_munip_2010-2017.xls")
+colnames(dat_ibge_2) <- c("ano", "codigo_regiao", "nome_regiao",
 "codigo_uf", "sigla_uf", "nome_uf",
 "cod_municipio", "nome_munic", "nome_metro",
 "codigo_meso", "nome_meso", "codigo_micro", "nome_micro",
@@ -198,24 +216,28 @@ colnames(dat_ibge) <- c("ano", "codigo_regiao", "nome_regiao",
 "codigo_regiao_rural", "nome_regiao_rural", "regiao_rural_classificacao",
 "amazonia_legal", "semiarido", "cidade_de_sao_paulo",
 "vab_agropecuaria", "vab_industria", "vab_servicos_exclusivo", "vab_adm_publica", "vab_total",
-"impostos", "pib_total", #"populacao",
+"impostos", "pib_total",
 "pib_per_capita",
 "atividade_vab1", "atividade_vab2", "atividade_vab3")
+dat_ibge_2 <- dat_ibge_2 %>%
+  dplyr::mutate(cod_municipio = as.character(cod_municipio),
+                codigo_meso = as.character(codigo_meso),
+                codigo_micro = as.character(codigo_micro))
+
+dat_ibge <- dplyr::bind_rows(dat_ibge_1, dat_ibge_2)
 ```
 
 ```{r gdpmap, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
-dat_gdp <- dat_ibge %>% dplyr::filter(ano == 2015) %>% 
-  dplyr::mutate(cod_municipio = as.character(cod_municipio)) %>% 
-  dplyr::mutate(pib_total = pib_total / 1000000)
+dat_gdp <- dat_ibge %>% dplyr::filter(ano == 2002) %>% 
+  dplyr::mutate(pib_total = pib_total / 1000)
 
 dat_gdp <- base_mun %>% dplyr::left_join(dat_gdp, by = c("code_mn" = "cod_municipio"))
 
-dat_growth <- dat_ibge %>% dplyr::filter(ano %in% c(2015, 2017)) %>% 
-  dplyr::select(cod_municipio, ano, pib_per_capita) %>%
-  tidyr::spread(key = "ano", value = "pib_per_capita") %>%
-  dplyr::mutate(g_cap = (`2017` - `2015`) / `2015` * 100,
-                cod_municipio = as.character(cod_municipio)) %>%
-  dplyr::select(cod_municipio, g_cap)
+dat_growth <- dat_ibge %>% dplyr::filter(ano %in% c(2002, 2011)) %>% 
+  dplyr::select(cod_municipio, ano, pib_total) %>%
+  tidyr::spread(key = "ano", value = "pib_total") %>%
+  dplyr::mutate(g = (`2011` - `2002`) / `2002` * 100) %>%
+  dplyr::select(cod_municipio, g)
 
 dat_gdp <- dat_gdp %>% 
   dplyr::left_join(dat_growth, by = c("code_mn" = "cod_municipio"))
@@ -223,13 +245,13 @@ dat_gdp <- dat_gdp %>%
 tmap::tm_shape(dat_gdp) + 
   tmap::tm_facets(nrow = 1) + 
   tmap::tm_borders(lwd=0.5, alpha=0.4) + 
-  tmap::tm_fill(col = c("pib_per_capita", "g_cap"), n=8, style="quantile", palette = "-magma", title = "") +
+  tmap::tm_fill(col = c("pib_total", "g"), n=8, style="quantile", palette = "-magma", title = "") +
   tmap::tm_layout(legend.position = c("left", "bottom"),
-                  panel.labels=c("2015 GDP (per capita, BRL)", "2015-2017 growth rate (%)"))
+                  panel.labels=c("GDP panel title (thousand BRL)", "Growth rate (%) panel title"))
 ```
 
 
-#### HDI 
+HDI is not available at municipality level
 
 #### Population and growth rates
 
@@ -260,6 +282,13 @@ tmap::tm_shape(dat_sect) +
 #### Human capital
 
 
+#### Open issues
+
+Mine data: observations of the current, endogeneity? For causal statements we would certainly need date of mine opening
+
+Huge (!) growth rates  -> outliers
+
+panel setting y/n?
 
 
 ## Spatial connectivity
@@ -333,18 +362,23 @@ nb_5nnb <- spdep::knn2nb(nb_5nnb, sym=F)
 
 Some sentences on spatial AC: What is it, why is it important?
 
-Similar observations are closer to each other.
+Positive spatial AC means that similar observations are closer to each other. Negative spatial AC close observations have more dissimilar values than those locations further away
 
 In a regression framework...
 
-From examining the maps above, we can already guess that clustering is going on. But we also want to test for spatial autocorellation. This can be done by.. For doing so, we make use of our above defined definition of neighbourhood.
+From examining the maps above, we can already guess that clustering is going on. But we also want to test. Most common measure for global (i.e. providing a single value representing the data) spatial autocorellation is the Moran's I statistic. It essentially evaluates how similar observations at location i deviate from the mean compared to neighbouring regions of that location i compare to the mean. Formally, it is defined as
 
+$$I = \frac{\sum_{i=1}^n\sum_{j=1}^n w_{i,j} (x_i-\bar{x}) (x_j-\bar{x})}{(\sum_{i=1}^n\sum_{j=1}^n w_{i,j}) \sum_{i=1}^n(x_i-\bar{x})^2}$$
+
+where $x_i$ and $x_j$ are observations at locations i and j, and $w_i,j$ is the weight that determines the relationship between i and j. We can derive the expected value of I, which would correspond to a random distributions of observations
+
+$$E(I) = \frac{-1}{n-1}$$
+and test whether I is significantly different from E(I).
+
+For determining which observations are neighbours, we make use of our above defined definition of neighbourhood
 row standardisation style="W"
 
-Global spatial autocorrelation
-
 ```{r moransi, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
-
 lwW <- spdep::nb2listw(nb_5nnb, style="W")
 
 out <- dplyr::bind_rows(
@@ -357,33 +391,92 @@ out <- dplyr::bind_rows(
 names(out)[1:3] <- c("Moran's I", "Expectation", "Variance")
 out <- dplyr::bind_cols("Variable" = c("2015 GDP (per capita, BRL)", "2015-2017 growth rate (%)", "2015 GVA acgriculture (%)", 
                                        "2015 GVA industry (%)", "2015 GVA services (%)", "2015 GVA public sector (%)"), out); out
-
 ```
 
-```{r moranplots, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE, fig.show="hold", out.width="0.49\\linewidth"}
-
+```{r moranplots, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE, fig.show="hold", out.width="50%"}
 spdep::moran.plot(dat_gdp$pib_per_capita, listw=lwW)
-spdep::moran.plot(dat_gdp$pib_per_capita, listw=lwW)
-
+spdep::moran.plot(dat_gdp$g_cap, listw=lwW)
 ```
 
-Local spatial autocorrelation?
+While the strength of this global statistic is that is summarises the data with a single value, it does not give any insights which observations are similar or different to observations in their neighbourhodd. Here, the Local Moran's I can help. Its nature is similar to the global statistic, but each observation receives its own I statistic, as well as its own expected value and variance. Without going into detail here, it essentially evaluates how each observation deviates from the mean compared to how its neighbouring observations compare to the mean. 
+
+```{r localmoran, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+localm_pib <- spdep::localmoran(dat_gdp$pib_per_capita, listw=lwW, alternative = "two.sided") %>% dplyr::as_data_frame() 
+colnames(localm_pib) <- c(colnames(localm_pib)[-5], "p_pib")
+localm_pib <- sf::st_as_sf(localm_pib %>% 
+                             dplyr::mutate(geometry = sf::st_geometry(dat_gdp)) %>%
+                             dplyr::mutate(code_mn = dat_gdp$code_mn)) %>% 
+  dplyr::mutate(lsa_pib = ifelse(Ii > 0, "positive", "negative"))
+
+localm_g <- spdep::localmoran(dat_gdp$g_cap, listw=lwW, alternative = "two.sided") %>% dplyr::as_data_frame() 
+colnames(localm_g) <- c(colnames(localm_g)[-5], "p_g")
+localm_g <- localm_g %>% dplyr::mutate(code_mn = dat_gdp$code_mn) %>%
+  dplyr::mutate(lsa_g = ifelse(Ii > 0, "positive", "negative"))
+
+localm <- dplyr::left_join(localm_pib, localm_g, by = "code_mn") %>%
+  dplyr::mutate(lsa_pib = ifelse(p_pib < 0.05, lsa_pib, NA),
+                lsa_g = ifelse(p_g < 0.05, lsa_g, NA)) 
+
+tmap::tm_shape(base_nat) +
+  tmap::tm_borders(lwd=2) +
+tmap::tm_shape(localm) + 
+  tmap::tm_facets(nrow = 1) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) +
+  tmap::tm_fill(col = c("lsa_pib", "lsa_g"), style = "cat", palette = "Set1",
+                title = "Local Moran's I",
+                colorNA = "white", textNA = "not significant",) +
+tmap::tm_layout(legend.position = c("left", "bottom"),
+                  panel.labels=c("2015 GDP (per capita, BRL)", "2015-2017 growth rate (%)"))
+```
+
 
 ## Proposal of a growth model by the use of simulated data
 
-Typical growth regressions, as motivated in the literature on convergence across countries, regress growth rates of countries or regions on their capital stock (usually GDP) at the initial period as well as a number of further determinants of growth [@barro1991economic]. Typically, these include information such as on population growth, human capital stock, sectoral structure and employment [@crespo2014determinants]. As these variables likely exhibit spatial dependence, @lesage2008growth propose following Spatial Durbin Model (SDM) for growth regressions:
+Typical growth regressions, as motivated in the literature on convergence across countries, regress growth rates of countries or regions on their capital stock (usually GDP) at the initial period as well as a number of further determinants of growth [@barro1991economic]. Typically, these include information such as on population growth, human capital stock, sectoral structure and employment [@crespo2014determinants]. These variables likely exhibit spatial dependence, implying that the assumption of independence between observations - typically assumed in classical linear regressions - is violated. In fact, I showed in the sections above that the variables so-far collected for my research are significally spatially autocorellated. Spatial econometric models explicitly consider spatial dependence. @lesage2008growth propose following Spatial Durbin Model (SDM) for growth regressions:
 
 $$\boldsymbol{y} = \rho \boldsymbol{Wy} + \boldsymbol{X\beta} + \boldsymbol{WX \theta} + \boldsymbol{u}$$
 In my case, the dependent variable $\boldsymbol{y}$ denotes an $n \times 1$ vector of regional economic growth rates for $n = 1, \dots ,N$ Brazilian municipalities. $\boldsymbol{X}$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period. $\mathbf{W}$ denotes the so-called spatial weights or connectivity matrix, allowing for parsimonious treatment of spatial dependence [@anselin2013spatial]. It is an $n \times n$, non-negative, row-standardised matrix with $w_{ii} = 0$. Its elements are used to specify the spatial dependence structure among the observations, i.e. $w_{ij} > 0$ if region $j$ is in a neighbourhood relationship with region $i$ ($i, j = 1, \dots, n$). The $k \times 1$ vectors $\boldsymbol{\beta}$ and $\boldsymbol{\theta}$ correspond to $\boldsymbol{X}$ and $\boldsymbol{WX}$ respectively, and $\rho \in (-1, 1)$ captures the strength of spatial autocorrelation. The random error term $\boldsymbol{u}$ is assumed to be constant and normally distributed.
 
+
+### Classical linear model
+
+Note that while originally intended to use artificial data, I will actually use real data right away in a small and preliminary model.
+
+```{r clm, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+
+reg_data <- dplyr::left_join(
+  dat_gdp %>% dplyr::select(code_mn, g_cap, pib_per_capita),
+  dat_sect %>% dplyr::select(code_mn, vab_agropecuaria_perc, vab_industria_perc) %>% sf::st_drop_geometry(), 
+  by = "code_mn") 
+
+reg_data <- reg_data %>% 
+  dplyr::left_join(bra_mines %>% 
+                     sf::st_drop_geometry() %>% 
+                     dplyr::mutate(code_mn = as.character(code_mn)) %>%
+                     dplyr::select(code_mn, mine_count), 
+                   by = "code_mn") %>% dplyr::select(-code_mn) %>%
+  sf::st_drop_geometry() %>%
+  dplyr::mutate(mine = ifelse(is.na(mine_count), 0, 1))
+
+m <- g_cap ~ log(pib_per_capita) + mine + vab_agropecuaria_perc + vab_industria_perc
+fit_1 <- lm(formula = m, data = reg_data)
+summary(fit_1)
+
+summary(reg_data$g_cap)
+plot(reg_data$vab_industria_perc, log(reg_data$pib_per_capita))
+```
+
+#### Exploring the residuals
+
+ncovr_sf$res_fit1 <- residuals(fit_1)
+
+lm.morantest(fit_1, rwm, alternative="two.sided")
+
+### Spatial models
+
+### A bayesian approach
+
 The idea of this exercise is to set up R code for estimating spatial models in a Bayesian fashion [@lesage2009introduction]. It is intended to prepare the functions for the SDM as well as other variations of spatial models such as the spatial autoregressive (SAR), spatial error (SEM), and spatial lag model (SLX).
 
-Instead of directly utilising 'real' data of Brazilian municipalities and mines, I will make this course project a simulation study. This has the following advantages:
-
-- Simulating spatially autocorrelated data is a useful exercise for understanding spatial data.
-- Simulated data implies knowing the underlying data generating process (DGP). This is helpful for evaluating how the models perform.
-- SNL data are unfortunately not freely available, and socio-economic municipality data may require arduous data wrangling. Simulating the data, in turn, allows full and easy reproducability for everyone.
-
-I will hence develop and apply code for spatial econometric models on simulated data, first in order to check if the codes are working correctly and second to compare how the models perform. Note that the course project will be a preliminary step for a more extensive paper idea. It will help sorting out potential errors in the code and secure correct application on real data at a later stage. Furthermore, it will help understanding misspecifications in spatial econometric models in an applied and practical way. 
 
 ## References
