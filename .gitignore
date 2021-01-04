@@ -40,6 +40,8 @@ vignettes/*.pdf
 
 # outputs
 project/*html
+project/*log
+project/*tex
 img
 
 # large data
@@ -48,6 +50,10 @@ project/ibge_data/geobr
 project/ibge_data/temp
 project/mine_data
 project/wdpa_data
+
+# intermediate data
+project/ibge_data/pop_municip_2002.xls
+project/ibge_data/pop_municip_2011.xls
 
 # preparing restricted SNL data
 project/prepare_data.R
