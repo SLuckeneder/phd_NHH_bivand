@@ -13,6 +13,15 @@ for (yr in years){
   mun <- geobr::read_municipality(code_muni = "all",year = yr, simplified = FALSE, showProgress = TRUE) 
   sf::st_write(mun, paste0("project/ibge_data/geobr/mun_base_", yr, ".shp"))
 }
+for (yr in years){
+  borders <- geobr::read_country(year = yr, simplified = FALSE, showProgress = TRUE) 
+  sf::st_write(borders, paste0("project/ibge_data/geobr/borders_base_", yr, ".shp"))
+}
+# for (yr in years){
+#   borders <- geobr::read_state(year = yr, simplified = FALSE, showProgress = TRUE)
+#   sf::st_write(borders, paste0("project/ibge_data/geobr/states_base_", yr, ".shp"))
+# }
+
 
 
 
@@ -106,8 +115,31 @@ for (yr in c(2015:2019)){
 }
 
 
+# population --------------------------------------------------------------
 
+# 2011
+pop_municip_2011 <- readxl::read_excel("project/ibge_data/pop_municip_2011.xls", skip = 2) %>%
+  `colnames<-`(c("sigula_uf", "codigo_uf", "cod_municipio_short", "nome_munic", "pop")) %>%
+  dplyr::filter(! is.na(pop)) %>%
+  dplyr::mutate(cod_municipio = paste0(codigo_uf, cod_municipio_short)) %>%
+  dplyr::mutate(ano = 2011)
 
+# 2002
+pop_municip_2002 <- readxl::read_excel("project/ibge_data/pop_municip_2002.xls", skip = 4) %>%
+  `colnames<-`(c("sigula_uf", "codigo_uf", "cod_municipio_short", "nome_munic", "pop")) %>%
+  dplyr::filter(! is.na(pop)) %>%
+  dplyr::mutate(ano = 2002)
+pop_municip_2002 <- dplyr::left_join(pop_municip_2011 %>% dplyr::select("codigo_uf", "cod_municipio", "nome_munic") %>% dplyr::mutate(unid = paste0(codigo_uf, nome_munic)), 
+                                     pop_municip_2002 %>% 
+                                       dplyr::mutate(unid = paste0(codigo_uf, nome_munic)) %>%
+                                       dplyr::select(-codigo_uf, -nome_munic), 
+                                     by = "unid") %>%
+  dplyr::select(-unid) %>%
+  dplyr::mutate(cod_municipio_short = as.character(cod_municipio_short))
+
+dat_ibge_pop <- dplyr::bind_rows(pop_municip_2002, pop_municip_2011)
+
+write.csv(dat_ibge_pop,"project/ibge_data/pop_municip_2002_2011.csv", row.names = FALSE)
 
 
 
