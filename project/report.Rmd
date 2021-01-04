@@ -24,13 +24,15 @@ My study will concentrate on mining expansion in Brazil. The country's president
 
 Insights from the talk with Paolo: Paragraph on the two worlds of mining in Brazil: large-scale and artisanal mining. Minas Gerais vs. opening indigenous land. Ambiguity also how indigenous communities deal with it. 
 
+I will focus on 2002 - 2011 growth period
+
 I want to challenge the claim that mining positively affects both mining regions and, via spillover effects, their neighbours in terms of economic growth. For that, I intend employing a spatial econometric growth model as motivated by @lesage2008growth. Such an empirical framework will enable relating detailed mine-specific data on extraction intensity to regional economic impacts. It will take spatial autocorrelation into consideration and will allow the estimation of spillover effects between municipalities.
 
 ## Exploring the data
 
 First, for getting a clearer picture about the spatial relations of the variables of interest, I assess how mining operations, GDP growth rates, and potentially important explanatory variables are distributed across Brazil.
 
-As the basis for all maps, I access shapefiles from the Brazilian Institute of Geography and Statistics [@ibge2020] for national borders, states, and municipalities. I utilised the `geobr` package, selected the year 2017 and transformed the coordinate reference system to WGS84:
+As the basis for all maps, I access shapefiles from the Brazilian Institute of Geography and Statistics [@ibge2020] for national borders, states, and municipalities. I utilised the `geobr` package, selected the year 2001 (because there are no maps available for 2002) and transformed the coordinate reference system to WGS84:
 
 ```{r base, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 library(dplyr)
@@ -40,27 +42,27 @@ library(sf)
 library(geobr)
 print(geobr::list_geobr(), n = 5)
 
-yr <- 2017
+yr <- 2001
 
 if(!file.exists(paste0("ibge_data/geobr/base_nat_", yr, ".shp"))){
   base_nat <- geobr::read_country(year = yr, simplified = FALSE, showProgress = TRUE) 
   sf::st_write(base_nat, paste0("ibge_data/geobr/base_nat_", yr, ".shp"))
 } else {
-  base_nat <- sf::read_sf("ibge_data/geobr/base_nat_2017.shp")
+  base_nat <- sf::read_sf("ibge_data/geobr/base_nat_2001.shp")
 }
 
 if(!file.exists(paste0("ibge_data/geobr/base_sta_", yr, ".shp"))){
   base_sta <- geobr::read_state(year = yr, simplified = FALSE, showProgress = TRUE)
   sf::st_write(base_sta, paste0("ibge_data/geobr/base_sta_", yr, ".shp"))
 } else {
-  base_sta <- sf::read_sf("ibge_data/geobr/base_sta_2017.shp")
+  base_sta <- sf::read_sf("ibge_data/geobr/base_sta_2001.shp")
 }
 
 if(!file.exists(paste0("ibge_data/geobr/base_mun_", yr, ".shp"))){
-  base_mun <- geobr::read_municipality(code_muni = "all",year = yr, simplified = FALSE, showProgress = TRUE) 
+  base_mun <- geobr::read_municipality(code_mn = "all",year = yr, simplified = FALSE, showProgress = TRUE) 
   sf::st_write(base_mun, paste0("ibge_data/geobr/base_mun_", yr, ".shp"))
 } else {
-  base_mun <- sf::read_sf("ibge_data/geobr/base_mun_2017.shp")
+  base_mun <- sf::read_sf("ibge_data/geobr/base_mun_2001.shp")
 }
 
 base_nat <- base_nat %>% sf::st_transform(crs = sf::st_crs("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"))
@@ -176,17 +178,18 @@ tmap::tm_scale_bar(position=c("right", "bottom"))
 
 ### Municipality statistics
 
-Socio-economic data at the municipality-level can be accessed from the Brazilian Institute of Geography and Statistics [@ibge2020]. As an initial step, I will only use 2015-2017 data. Due to a number of changes of political borders and entities in the past, the creation of longer time series (e.g. for constructing growth rates) would require more data wrangling than feasible within the scope of the project.
+Socio-economic data at the municipality-level can be accessed from the Brazilian Institute of Geography and Statistics [@ibge2020]. Since I am interested in the 2002-2011 growth period, I will need to assess 2002 and 2011 data. Due to a number of changes of political borders and entities in the past, I have to drop observations that were affected by a change of borders during the time period covered. (In fact, this can be improved, but it would require more data wrangling than feasible within the scope of the project.) 
 
 #### GDP and growth rates
 
-Millenium started with high growth rates. Per capita GDP rose from 2.800 USD in 2002 to 13.200 USD in 2011. Economic crisis since 2014. 
+Millenium started with high growth rates. Per capita GDP rose from 2.800 USD in 2002 to 13.200 USD in 2011 (that's about 370%!). Economic crisis since 2014. 
 BRL stable since currency crises in the 1990s, but compared to EUR or USD at high inflation rates (5-10%). This partly explains the low 2002 numbers.
+Insert a chart
 
 
 IBGE Data, 
-GDP 2015, GDP per capita 2015
-GDP growth 2015-2017, per capita growth 2015-2017
+GDP per capita 2002
+per capita growth 2002-2011
 
 ```{r gdpdat, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
 dat_ibge_1 <- readxl::read_excel("ibge_data/gdp_munip_1999-2012.xlsx")
@@ -202,6 +205,10 @@ dat_ibge_1 <- dat_ibge_1 %>%
   dplyr::filter(ano < 2010) %>%
   dplyr::mutate(cod_municipio = as.character(cod_municipio),
                 ano = as.numeric(ano)) 
+dat_ibge_pop <- read.csv("ibge_data/pop_municip_2002_2011.csv")
+dat_ibge_1 <- dat_ibge_1 %>% dplyr::mutate(unid = paste0(ano, cod_municipio)) %>%
+  dplyr::left_join(dat_ibge_pop %>% dplyr::mutate(unid = paste0(ano, cod_municipio)) %>% dplyr::select(unid, pop), by = "unid") %>%
+  dplyr::mutate(pib_per_capita = pib_total * 1000 / pop)
 
 dat_ibge_2 <- readxl::read_excel("ibge_data/gdp_munip_2010-2017.xls")
 colnames(dat_ibge_2) <- c("ano", "codigo_regiao", "nome_regiao",
@@ -222,7 +229,8 @@ colnames(dat_ibge_2) <- c("ano", "codigo_regiao", "nome_regiao",
 dat_ibge_2 <- dat_ibge_2 %>%
   dplyr::mutate(cod_municipio = as.character(cod_municipio),
                 codigo_meso = as.character(codigo_meso),
-                codigo_micro = as.character(codigo_micro))
+                codigo_micro = as.character(codigo_micro)) %>%
+  dplyr::mutate(pop =  pib_total * 1000 / pib_per_capita)
 
 dat_ibge <- dplyr::bind_rows(dat_ibge_1, dat_ibge_2)
 ```
@@ -233,11 +241,16 @@ dat_gdp <- dat_ibge %>% dplyr::filter(ano == 2002) %>%
 
 dat_gdp <- base_mun %>% dplyr::left_join(dat_gdp, by = c("code_mn" = "cod_municipio"))
 
+# dat_growth <- dat_ibge %>% dplyr::filter(ano %in% c(2002, 2011)) %>% 
+#   dplyr::select(cod_municipio, ano, pib_total) %>%
+#   tidyr::spread(key = "ano", value = "pib_total") %>%
+#   dplyr::mutate(g = (`2011` - `2002`) / `2002` * 100) %>%
+#   dplyr::select(cod_municipio, g)
 dat_growth <- dat_ibge %>% dplyr::filter(ano %in% c(2002, 2011)) %>% 
-  dplyr::select(cod_municipio, ano, pib_total) %>%
-  tidyr::spread(key = "ano", value = "pib_total") %>%
-  dplyr::mutate(g = (`2011` - `2002`) / `2002` * 100) %>%
-  dplyr::select(cod_municipio, g)
+  dplyr::select(cod_municipio, ano, pib_per_capita) %>%
+  tidyr::spread(key = "ano", value = "pib_per_capita") %>%
+  dplyr::mutate(g_cap = (`2011` - `2002`) / `2002` * 100) %>%
+  dplyr::select(cod_municipio, g_cap)
 
 dat_gdp <- dat_gdp %>% 
   dplyr::left_join(dat_growth, by = c("code_mn" = "cod_municipio"))
@@ -245,9 +258,9 @@ dat_gdp <- dat_gdp %>%
 tmap::tm_shape(dat_gdp) + 
   tmap::tm_facets(nrow = 1) + 
   tmap::tm_borders(lwd=0.5, alpha=0.4) + 
-  tmap::tm_fill(col = c("pib_total", "g"), n=8, style="quantile", palette = "-magma", title = "") +
+  tmap::tm_fill(col = c("pib_total", "g_cap"), n=8, style="quantile", palette = "-magma", title = "") +
   tmap::tm_layout(legend.position = c("left", "bottom"),
-                  panel.labels=c("GDP panel title (thousand BRL)", "Growth rate (%) panel title"))
+                  panel.labels=c("2002 per capita GDP (current BRL)", "2002-2011 growth rate (%)"))
 ```
 
 
@@ -255,12 +268,34 @@ HDI is not available at municipality level
 
 #### Population and growth rates
 
+```{r popmap, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
+dat_pop <- dat_ibge %>% dplyr::filter(ano == 2002)
+dat_pop <- base_mun %>% dplyr::left_join(dat_pop, by = c("code_mn" = "cod_municipio"))
+
+dat_popgrowth <- dat_ibge %>% dplyr::filter(ano %in% c(2002, 2011)) %>% 
+  dplyr::select(cod_municipio, ano, pop) %>%
+  tidyr::spread(key = "ano", value = "pop") %>%
+  dplyr::mutate(g_pop = (`2011` - `2002`) / `2002` * 100) %>%
+  dplyr::select(cod_municipio, g_pop)
+
+dat_pop <- dat_pop %>% 
+  dplyr::left_join(dat_popgrowth, by = c("code_mn" = "cod_municipio"))
+
+tmap::tm_shape(dat_pop) + 
+  tmap::tm_facets(nrow = 1) + 
+  tmap::tm_borders(lwd=0.5, alpha=0.4) + 
+  tmap::tm_fill(col = c("pop", "g_pop"), n=8, style="quantile", title = "") +
+  tmap::tm_layout(legend.position = c("left", "bottom"),
+                  panel.labels=c("2002 population", "2002-2011 population growth"))
+```
+
 #### Sectoral structure
 
 ```{r sectormap, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
-dat_sect <- dat_ibge %>% dplyr::filter(ano == 2015) %>% 
+dat_sect <- dat_ibge %>% dplyr::filter(ano == 2002) %>% 
   dplyr::mutate(cod_municipio = as.character(cod_municipio)) %>% 
   dplyr::mutate(vab_agropecuaria = ifelse(vab_agropecuaria < 0, 0, vab_agropecuaria)) %>%
+  dplyr::mutate(vab_total = vab_agropecuaria + vab_industria + vab_servicos_exclusivo + vab_adm_publica) %>%
   dplyr::mutate(vab_agropecuaria_perc = vab_agropecuaria / vab_total,
                 vab_industria_perc = vab_industria / vab_total,
                 vab_servicos_exclusivo_perc = vab_servicos_exclusivo / vab_total,
@@ -272,21 +307,18 @@ tmap::tm_shape(dat_sect) +
   tmap::tm_facets(nrow = 2) + 
   tmap::tm_borders(lwd=0.5, alpha=0.4) + 
   tmap::tm_fill(col = c("vab_agropecuaria_perc", "vab_industria_perc", "vab_servicos_exclusivo_perc", "vab_adm_publica_perc"), 
-                n=8, style="quantile", title = "", palette = "-magma",) +
+                n=8, style="quantile", title = "", palette = "-magma") +
   tmap::tm_layout(legend.position = c("left", "bottom"),
-                  panel.labels=c("2015 GVA acgriculture (%)", "2015 GVA industry (%)", "2015 GVA services (%)", "2015 GVA public sector (%)"))
+                  panel.labels=c("2002 GVA acgriculture (%)", "2002 GVA industry (%)", "2002 GVA services (%)", "2002 GVA public sector (%)"))
 ```
-
-#### Employment
-
-#### Human capital
-
 
 #### Open issues
 
 Mine data: observations of the current, endogeneity? For causal statements we would certainly need date of mine opening
 
 Huge (!) growth rates  -> outliers
+
+Employment and human capital
 
 panel setting y/n?
 
@@ -305,16 +337,16 @@ Decreasing functions of distance: heavy, bad for modelling later on
 
 Lets start with queen contiguity, where neighbourhodd is defined by sharing borders + interpretation
 
+```{r neighbourscheck, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+library(spdep)
+nb_q <- spdep::poly2nb(base_mun, queen=TRUE)
+summary(nb_q)
+```
+
 The average number of neighbors (adjacent polygons) is 5.9, 9 polygons have only 1 neighbor and the most connected municipality borders 23 neighbors. 2 municipalities are islands and hence, according to this definition, have no neighbours. Since ..., I exclude them from the data.
 
 ```{r neighboursq, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
-library(spdep)
-
-nb_q <- spdep::poly2nb(base_mun, queen=TRUE)
-summary(nb_q)
-
-# remove islands
-base_mun <- base_mun[-c(1526, 3500),]
+base_mun <- base_mun[-c(1523, 3496),]
 nb_q <- spdep::poly2nb(base_mun, queen=TRUE)
 
 plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
@@ -350,7 +382,8 @@ A note on dimension: weights and observations must fit. Exclude NA entries (2) f
 ```{r dims, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 
 dat_gdp <- dat_gdp[!is.na(dat_gdp$pib_per_capita),]
-dat_sect <- dat_sect[!is.na(dat_sect$vab_agropecuaria_perc),]
+dat_sect <- dat_sect %>% dplyr::filter(code_mn %in% dat_gdp$code_mn)
+dat_pop <- dat_pop %>% dplyr::filter(code_mn %in% dat_gdp$code_mn)
 
 coords <- sf::st_centroid(sf::st_geometry(dat_gdp), of_largest_polygon=TRUE)
 nb_5nnb <- spdep::knearneigh(coords, k=5)
@@ -384,13 +417,14 @@ lwW <- spdep::nb2listw(nb_5nnb, style="W")
 out <- dplyr::bind_rows(
   broom::tidy(spdep::moran.test(dat_gdp$pib_per_capita, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
   broom::tidy(spdep::moran.test(dat_gdp$g_cap, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
+  broom::tidy(spdep::moran.test(dat_pop$g_pop, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
   broom::tidy(spdep::moran.test(dat_sect$vab_agropecuaria_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
   broom::tidy(spdep::moran.test(dat_sect$vab_industria_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
   broom::tidy(spdep::moran.test(dat_sect$vab_servicos_exclusivo_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5],
   broom::tidy(spdep::moran.test(dat_sect$vab_adm_publica_perc, listw=lwW, randomisation=FALSE, alternative="two.sided"))[1:5])
 names(out)[1:3] <- c("Moran's I", "Expectation", "Variance")
-out <- dplyr::bind_cols("Variable" = c("2015 GDP (per capita, BRL)", "2015-2017 growth rate (%)", "2015 GVA acgriculture (%)", 
-                                       "2015 GVA industry (%)", "2015 GVA services (%)", "2015 GVA public sector (%)"), out); out
+out <- dplyr::bind_cols("Variable" = c("2002 GDP (per capita, BRL)", "2002-2011 per cap. GDP growth (%)", "2002-2011 population growth (%)", 
+                                       "2002 GVA acgriculture (%)", "2002 GVA industry (%)", "2002 GVA services (%)", "2002 GVA public sector (%)"), out); out
 ```
 
 ```{r moranplots, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE, fig.show="hold", out.width="50%"}
@@ -426,17 +460,20 @@ tmap::tm_shape(localm) +
                 title = "Local Moran's I",
                 colorNA = "white", textNA = "not significant",) +
 tmap::tm_layout(legend.position = c("left", "bottom"),
-                  panel.labels=c("2015 GDP (per capita, BRL)", "2015-2017 growth rate (%)"))
+                  panel.labels=c("2002 GDP (per capita, BRL)", "2002-2011 growth rate (%)"))
 ```
 
 
-## Proposal of a growth model by the use of simulated data
+## Proposal of a municipality-level growth model
 
-Typical growth regressions, as motivated in the literature on convergence across countries, regress growth rates of countries or regions on their capital stock (usually GDP) at the initial period as well as a number of further determinants of growth [@barro1991economic]. Typically, these include information such as on population growth, human capital stock, sectoral structure and employment [@crespo2014determinants]. These variables likely exhibit spatial dependence, implying that the assumption of independence between observations - typically assumed in classical linear regressions - is violated. In fact, I showed in the sections above that the variables so-far collected for my research are significally spatially autocorellated. Spatial econometric models explicitly consider spatial dependence. @lesage2008growth propose following Spatial Durbin Model (SDM) for growth regressions:
+Typical growth regressions, as motivated in the literature on convergence across countries, regress growth rates of countries or regions on their capital stock (usually GDP) at the initial period as well as a number of further determinants of growth [@barro1991economic]. Typically, these include information such as on population growth, human capital stock, sectoral structure and employment [@crespo2014determinants]. These variables likely exhibit spatial dependence, implying that the assumption of independence between observations - typically assumed in classical linear regressions - is violated. In fact, I demonstrated in the sections above that the variables so-far collected for my research are spatially autocorellated. Spatial econometric models explicitly consider spatial dependence. @lesage2008growth propose following Spatial Durbin Model (SDM) for growth regressions:
 
 $$\boldsymbol{y} = \rho \boldsymbol{Wy} + \boldsymbol{X\beta} + \boldsymbol{WX \theta} + \boldsymbol{u}$$
-In my case, the dependent variable $\boldsymbol{y}$ denotes an $n \times 1$ vector of regional economic growth rates for $n = 1, \dots ,N$ Brazilian municipalities. $\boldsymbol{X}$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period. $\mathbf{W}$ denotes the so-called spatial weights or connectivity matrix, allowing for parsimonious treatment of spatial dependence [@anselin2013spatial]. It is an $n \times n$, non-negative, row-standardised matrix with $w_{ii} = 0$. Its elements are used to specify the spatial dependence structure among the observations, i.e. $w_{ij} > 0$ if region $j$ is in a neighbourhood relationship with region $i$ ($i, j = 1, \dots, n$). The $k \times 1$ vectors $\boldsymbol{\beta}$ and $\boldsymbol{\theta}$ correspond to $\boldsymbol{X}$ and $\boldsymbol{WX}$ respectively, and $\rho \in (-1, 1)$ captures the strength of spatial autocorrelation. The random error term $\boldsymbol{u}$ is assumed to be constant and normally distributed.
+In my case, the dependent variable $\boldsymbol{y}$ denotes an $n \times 1$ vector of regional economic growth rates for $n$ Brazilian municipalities. $\boldsymbol{X}$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period. $\mathbf{W}$ denotes the so-called spatial weights or connectivity matrix, allowing for parsimonious treatment of spatial dependence [@anselin2013spatial]. It is an $n \times n$, non-negative, row-standardised matrix with $w_{ii} = 0$. Its elements are used to specify the spatial dependence structure among the observations, i.e. $w_{ij} > 0$ if region $j$ is in a neighbourhood relationship with region $i$ ($i, j = 1, \dots, n$). The $k \times 1$ vectors $\boldsymbol{\beta}$ and $\boldsymbol{\theta}$ correspond to $\boldsymbol{X}$ and $\boldsymbol{WX}$ respectively, and $\rho \in (-1, 1)$ captures the strength of spatial autocorrelation. The random error term $\boldsymbol{u}$ is assumed to be constant and normally distributed.
 
+Note that the SDM collapses into altered forms of spatial model types if either $\lambda = 0$ or $\rho = 0$. The former is referred to as the spatial autoregressive model (SAR). The latter type represents the so-called spatial lag of X model (SLX). For the case of both parameters being zero, the model collapses to a classical linear model.
+
+For the continued report, I will use this and that dependent and (partly logged) explanatory variables for this report, because it is about sketchiny the model and not about data mining. 
 
 ### Classical linear model
 
@@ -446,37 +483,88 @@ Note that while originally intended to use artificial data, I will actually use 
 
 reg_data <- dplyr::left_join(
   dat_gdp %>% dplyr::select(code_mn, g_cap, pib_per_capita),
-  dat_sect %>% dplyr::select(code_mn, vab_agropecuaria_perc, vab_industria_perc) %>% sf::st_drop_geometry(), 
-  by = "code_mn") 
+  dat_pop %>% dplyr::select(code_mn, g_pop) %>% sf::st_drop_geometry(), by = "code_mn") %>%
+  dplyr::left_join(dat_sect %>% dplyr::select(code_mn, vab_agropecuaria_perc, vab_industria_perc) %>% sf::st_drop_geometry(), by = "code_mn")
 
 reg_data <- reg_data %>% 
   dplyr::left_join(bra_mines %>% 
                      sf::st_drop_geometry() %>% 
                      dplyr::mutate(code_mn = as.character(code_mn)) %>%
                      dplyr::select(code_mn, mine_count), 
-                   by = "code_mn") %>% dplyr::select(-code_mn) %>%
+                   by = c("code_mn" = "code_mn")) %>% dplyr::select(-code_mn) %>%
   sf::st_drop_geometry() %>%
   dplyr::mutate(mine = ifelse(is.na(mine_count), 0, 1))
 
-m <- g_cap ~ log(pib_per_capita) + mine + vab_agropecuaria_perc + vab_industria_perc
-fit_1 <- lm(formula = m, data = reg_data)
-summary(fit_1)
-
-summary(reg_data$g_cap)
-plot(reg_data$vab_industria_perc, log(reg_data$pib_per_capita))
+m <- g_cap ~ log(pib_per_capita) + g_pop + mine + vab_agropecuaria_perc + vab_industria_perc
+m_ols <- lm(formula = m, data = reg_data); summary(m_ols)
 ```
 
-#### Exploring the residuals
+We can explore the residuals. What we do not want is the residuals to have a spatial pattern.
 
-ncovr_sf$res_fit1 <- residuals(fit_1)
+```{r lmmorantest, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+spdep::lm.morantest(m_ols, listw=lwW, alternative="two.sided")
+```
 
-lm.morantest(fit_1, rwm, alternative="two.sided")
+We find positive spatial autocorrelation in the residuals. Not too high, but still the residuals are systematically related. As this is a problem for statistical inference, we try to address this issue with a spatial regression approach.
 
 ### Spatial models
 
-### A bayesian approach
+The `spatialreg` packages provides a number of types. I want to try 3: sar (global spatial model), slx (local spatial model), sdm (combines)
 
-The idea of this exercise is to set up R code for estimating spatial models in a Bayesian fashion [@lesage2009introduction]. It is intended to prepare the functions for the SDM as well as other variations of spatial models such as the spatial autoregressive (SAR), spatial error (SEM), and spatial lag model (SLX).
+```{r sar, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+m_sar <- spatialreg::lagsarlm(formula = m, data = reg_data, listw = lwW); summary(m_sar)
+```
 
+```{r slx, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+m_slx <- spatialreg::lmSLX(formula = m, data = reg_data, listw = lwW); summary(m_slx)
+```
+
+```{r sdm, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+m_sdm <- spatialreg::lagsarlm(formula = m, data = reg_data, listw = lwW, Durbin = TRUE); summary(m_sdm)
+```
+
+Note that one can employ an LM test for systematic model selection (source!), i.e. spdep::lm.LMtests()
+
+Impacts
+
+
+### Bayesian MCMC approaches for spatial econometric models
+
+@lesage2009introduction introduce the estimation of spatial models applying Bayesian methodology. Central to this technique is to rely on *conditional distributions* involving data and estimated parameters in order to obtain the *posterior distributions* of single parameters. Instead of relying on a complicated analytical solution of these posterior distributions, they highlight the usefulness of Markov Chain Monte Carlo (MCMC) estimation approaches. The great benefit of approaching spatial econometric problems by the use of Bayesian estimation is that the MCMC sampling can be easily extended for specific model needs such as allowing for a heteroskedastic disturbance structure, model selection and model averaging, or modelling spatially autocorrelated cencored and binary dependent variables.
+
+Let $D = \{y, X, W\}$ represent model data and $\theta$ denote the model parameters to be estimated. Applying Bayes rule, it follows that 
+
+$$p(\theta|D) = \frac{p(D|\theta)p(\theta)}{p(D)}$$
+The posterior distribution of $\theta$ thus is a compromise between *prior* information $p(\theta)$ and the *likelihood* $p(D|\theta)$, i.e. information coming from the sample data and the model. Simplifying this term by ignoring the data distribution $p(D)$ (it does not involve the parameters $\theta$), the posterior distribution of $\theta$ is a proportional product of $p(D|\theta)$ and $p(\theta)$. 
+
+The likelihood of a SAR model, i.e. $y = (I-\rho W)^{-1} X\beta + u$, can be written as
+
+$$p(D|\beta, \sigma, \rho) = (2\pi\sigma^2)^{-\frac{n}{2}} \ |A| \ exp\left(-\frac{1}{2\sigma^2}(Ay - X\beta)'(Ay - X\beta)\right)$$
+where, for notation convenience, $A = I_n - \rho W$. This likelihood is then combined with prior distributions of the parameters in the model. @lesage2009introduction rely on a so-called *normal-inverse gamma prior* (NIG) for the parameters $\beta$ and $\sigma^2$, where $\beta$ follows a normal distribution conditional on an inverse gamma distribution for the parameter $\sigma^2$. While we have usually little intuition for $\beta$ and $\sigma^2$ and hence rely on fairly uninformative priors for these parameters, the case of $\rho$ is more interesting. From the row-standardisation of W and its corresponding eigenvalues, we know that $\rho \in (-1,1)$. Reasonable prior choices for $\rho$ would be a uniform distribution on the interval $(-1, 1)$ or, following @lesage2007beta, a $Beta(d, d)$ distribution that is centered on zero. Negative spatial dependence may further be of little interest for certain applications, motivating a prior where $\rho \in [0,1)$.
+
+Instead of working out analytical/numerical integration solutions for this problem, the idea of MCMC sampling is to examine a large random sample from the posterior distribution. For $\beta$ and $\sigma^2$, @lesage2009introduction show that the conditional distributions under the NIG prior take known forms: $\beta$ comes from a multivariate normal with mean and variance obtained from combining data and prior information, and $\sigma^2$ follows an inverse gamma distribution with shape and scale parameters that are, again, computed from available information. As these are familiar conditional distriutions, it is possible to apply a sampling technique referred to as *Gibbs sampling*, where the respective parameters are sampled and updated treating the remaining parameters as known.
+
+Yet, we do not always know the distributional form of conditional distributions, as is the case for the spatial parameter $\rho$. It takes the form
+$$p(\rho|\beta, \sigma) \propto |I_n-\rho W| \ exp\left(-\frac{1}{2\sigma^2}(Ay - X\beta)'(Ay - X\beta)\right)$$
+Therefore, we need an alternative sampling approach, such as the Metropolis-Hastings (M-H) algorithm. Meeting the notion of easily extendable, toolbox-style, Bayesian approaches, this procedure of sampling for $\rho$ is integrated as a separate step in the Gibbs sampling (*Metropolish within Gibbs*). The M-H sampling works as follows: In a first step, $\rho^*$, a candidate value for $\rho$, is generated from a *proposal distribution*. Second, this candidate value as well as the current value, which we label $\rho^c$, are used to evaluate the respective conditional likelihoods, in order to calculate an acceptance probability 
+$$\psi_H(\rho^c, \rho^*) = min \left[ 1, \frac{p(\rho^*|\beta, \sigma)}{p(\rho^c|\beta, \sigma)} \right] $$
+Finally, the proposed $\rho^*$ is accepted and becomes the new $\rho^c$ with probability $\psi_H(\rho^c, \rho^*)$ and otherwise we stay with the current value of $\rho^c$ for the next iteration. As a proposal distribution, @lesage2009introduction refer to a normal distribution along with a *tuned random walk procedure* suggested by @holloway2002bayesian, i.e. $\rho^* = \rho^c + c \cdot N(0,1)$, in order to let the sampler *move* over the entire conditional distribution. The *tuning* parameter $c$ is adjusted based on monitoring the acceptance rates, such as $c' = c/1.1$ whenever the acceptance rate falls below 40\% and $c' = c \cdot 1.1$ whenever it rises above 60\%. Moreover, we can make sure that $-1 < \rho < 1$ or any other restriction by using *rejection sampling*, i.e. rejecting values of $\rho$ outside the desired interval and drawing another proposal.
+
+To provide a comprehensive overview, I here recall the MCMC sampling algorithm for the SAR model under the $NIG(c, T, a, b)$ prior for $\beta$ and $\sigma^2$ as summarised by @lesage2009introduction:
+
+1. Sample $p(\beta|\sigma^2_{(0)}, \rho_{(0)})$ using the $N(c^*, \sigma_{(0)}T^*)$) distribution with mean and variance:
+$$c^* = (X'X + T^{-1})^{-1}(X'(I_n - \rho_{(0)} W)y + T^{-1}c \\ T^* = (X'X + T^{-1})^{-1}$$
+Label the sampled parameter vector $\beta_{(1)}$ and use this to replace the parameter vector $\beta_{(0)}$.
+Note that we have to set the parameters $c$ and $T$ for the NIG prior. As we face high prior uncertainty, we can choose a rather uninformative prior by setting $c=0$ and $T = I_k \cdot 10^{10}$.
+
+2. Sample $p(\sigma^2|\beta_{(1)}, \rho_{(0)})$, using an inverse gamma distribution $IG(a^*, b^*)$, where
+$$a^* = a + n/2 \\ b^* = b + (Ay-X\beta_{(1)})'(Ay-X\beta_{(1)})/2 \\ A = I_n - \rho_{(0)} W$$
+For a diffuse prior, we can assign $a = b = 0$.
+
+3. Sample $p(\rho|\beta_{(1)}, \sigma_{(1)})$ using the M-H algorithm. Label this updated value $\rho_{(1)}$ and return to step 1.
+
+This sequence of steps is repeated many times in order to obtain and - after some *burn-in period* - collect a lage number of draws. These allow for inference regarding the model parameters other than by the use of mean and standard deviation point estimates as known from frequentist approaches. In fact, we can construct the entire posterior distribution of the parameters from which one can easily derive means, medians, or credible intervals.
+
+What is next is to code the sampling algorithms for the SAR, as well as for the SDM and SLX types of spatial models.
 
 ## References
