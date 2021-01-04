@@ -46,4 +46,11 @@ img
 project/ibge_data/geo
 project/ibge_data/geobr
 project/ibge_data/temp
+project/mine_data
+project/wdpa_data
+
+# preparing restricted SNL data
+project/prepare_data.R
+
+
 
