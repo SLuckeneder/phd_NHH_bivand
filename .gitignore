@@ -43,6 +43,7 @@ project/*html
 project/*log
 project/*tex
 img
+project/report_files/
 
 # large data
 project/ibge_data/geo
