@@ -42,6 +42,7 @@ vignettes/*.pdf
 project/*html
 project/*log
 project/*tex
+project/*pdf
 img
 project/report_files/
 
