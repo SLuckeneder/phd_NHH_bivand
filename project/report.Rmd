@@ -9,7 +9,7 @@ bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, fig.width=14, fig.height=8)
+knitr::opts_chunk$set(echo = TRUE, fig.width=12, fig.height=8)
 ```
 
 # Mining and regional GDP growth - the Brazilian case 
@@ -20,15 +20,15 @@ It is well-known that mining activities relate to hazardous environmental and so
 
 The effects of mining on the economy have been widely debated, and theoretical channels have been discussed, from which we can draw ambiguous conclusions. On the one hand, there is the concept of 'mining clusters', which is centred on the idea that linkages between multinational corporations and local firms, local employment creation and knowledge spillovers are drivers of regional development [@arias2014]. On the other hand, the emergence of 'enclave economies' seems just as reasonable, because rather than being related to the creation of local employment, the large-scale natural resource development in the mining sector is highly capital-intensive. It requires significant funds for exploration, energy infrastructure, machinery, transportation networks and construction [@emel2008risky]. Also, mining increasingly becomes technologically intensive [@humphreys2007introduction]. Therefore, it is likely that employment for low-skilled workers is only short-term during the construction phase, while mining in the long-run offers fewer positions, which are taken by high-skilled (and potentially foreign) employees [@arias2014]. Furthermore, capital-intensive resources are associated with a higher likelihood of civil conflict than labour-intensive resources (such as biomass) [@van2011natural], which might hinder economic growth. 
 
-My study will concentrate on mining expansion in Brazil. The country's president, Jair Bolsonaro, is currently on the verge of opening peripheral indigenous and protected land for mining [@siqueira2020proposed]. He constructs an old fashioned development narrative, which accepts the destruction of ecosystems, most importantly the Brazilian Amazon, and the extinction of indigenous populations, in the name of development [@hope2019brazilian]. While it is evident that the policy path taken here will threaten people and unique ecosystems  [@siqueira2020proposed; @rorato2020brazilian], there is no clear empirical evidence if these extractive activities will foster local economic growth. Such a link is, however, crucial to the president's logic of a supposedly existing trade-off, stating that environmental degradation and the destruction of indigenous livelihoods were simply the costs of such a development, from which also local communities would benefit [@branford2019brazil]. My research question is therefore, whether mining acivities in Brazil can be related to the growth of local, i.e. municipality-level, GDP.
+My study will concentrate on mining expansion in Brazil. The country's president, Jair Bolsonaro, is currently on the verge of opening peripheral indigenous and protected land for mining [@siqueira2020proposed]. He constructs an old fashioned development narrative, which accepts the destruction of ecosystems, most importantly the Brazilian Amazon, and the extinction of indigenous populations, in the name of development [@hope2019brazilian]. While it is evident that the policy path taken here will threaten people and unique ecosystems  [@siqueira2020proposed; @rorato2020brazilian], there is no clear empirical evidence if these extractive activities will foster local economic growth. Such a link is, however, crucial to the president's logic of a supposedly existing trade-off, stating that environmental degradation and the destruction of indigenous livelihoods were simply the costs of such a development, from which also local communities would benefit [@branford2019brazil]. My research question is therefore, whether mining activities in Brazil can be related to the growth of local, i.e. municipality-level, GDP.
 
-Brazil's mining sector can be divided into two parts, with projects differing in size and nature, but also regarding their locations. On the one hand, some of the world's largest mining projects, owned by major corporations and operated by national and international mining companies, are located in the state of Minas Gerais. Minas Gerais (engl. *General Mines*) has been the center of Brazilian mining since the colonial era, and today's operations are highly capitalised and institutionalised in that region. On the other hand, large volumes of mined (precious) metals and minerals must be attributed to artisanal and small-scale mining (ASM). In the north of the country and thus widely intersecting with the Brazilian Amazon, ASM and large-scale mining co-exist, and the circumstances under which they are conducted differ from Minas Gerais. Here, mining operations very obviously affect especially vulnerable ecosystems, and many mineral deposits are located within indigenous lands. Current debates mostly concern the latter type of mining, and core questions are whether to open up indigenous and protected land for mining and how - if at all - to involve indigenous communities in metals and minerals development in the Amazon. Ambiguity among and within indigenous communities how to deal with the extraction of natural resources, ranging from complete rejection to already established informal mining business (and hence an open attitude towards a capitalist marked economy), contributes as another complicating factor to this topic.
+Brazil's mining sector can be divided into two parts, with projects differing in size and nature, but also regarding their locations. On the one hand, some of the world's largest mining projects, owned by major corporations and operated by national and international mining companies, are located in the state of Minas Gerais. Minas Gerais (engl. *General Mines*) has been the centre of Brazilian mining since the colonial era, and today's operations are highly capitalised and institutionalised in that region. On the other hand, large volumes of mined (precious) metals and minerals must be attributed to artisanal and small-scale mining (ASM). In the north of the country and thus widely intersecting with the Brazilian Amazon, ASM and large-scale mining co-exist, and the circumstances under which they are conducted differ from Minas Gerais. Here, mining operations very obviously affect especially vulnerable ecosystems, and many mineral deposits are located within indigenous lands. Current debates mostly concern the latter type of mining, and core questions are whether to open up indigenous and protected land for mining and how - if at all - to involve indigenous communities in metals and minerals development in the Amazon. Ambiguity among and within indigenous communities how to deal with the extraction of natural resources, ranging from complete rejection to already established informal mining businesses (and hence an open attitude towards a capitalist marked economy), contributes as another complicating factor to this topic.
 
 I want to empirically investigate the claim that mining would positively affect both mining regions and, via spillover effects, their neighbours in terms of economic growth. For that, I intend employing a spatial econometric growth model as motivated by @lesage2008growth. Such an empirical framework will enable relating detailed mine-specific data on extraction intensity to regional economic impacts. It will take spatial autocorrelation into consideration and will allow the estimation of spillover effects between municipalities. As a first step, the research will focus on the period 2002-2011, because it marks ten years of extensive growth based on the export of primary commodities. What followed since 2011 was moderate growth of a highly resource dependent economy until, eventually, an economic crisis hit the country in 2014. A major cause of the recession was a slump in global demand and thus a decline in commodity prices. 
 
 ## Exploring the data
 
-As a first exercise and in order to get a clearer picture about the spatial relations of the variables of interest, I assess how mining operations, GDP growth rates, and potentially important explanatory variables are distributed across Brazil.
+As a first exercise and in order to get a clearer picture about the available data, I assess how mining operations, GDP growth rates, and potentially important explanatory variables are distributed across Brazil.
 
 As the basis for all maps, I access shapefiles from the Brazilian Institute of Geography and Statistics [@ibge2020] for national borders, states, and municipalities. I utilise the `geobr` package, select the year 2001 (because there are no maps available for 2002) and transform the coordinate reference system to WGS84:
 
@@ -84,7 +84,7 @@ The exact locations of mining sites were obtained from S&P's SNL Metals and Mini
 bra_mines <- sf::read_sf("mine_data/bra_mines.shp")
 ```
 
-I can now draw a map of Brazil indicating the number of active mines within each municipality. Before, I usually used `ggplot2` for the mapping, but here I utilise the `tmap` package, which was introduced during the course and turned out especially intuitive and user-friendly to me:
+I can now draw a map of Brazil indicating the number of active mines within each municipality. Note that I utilise the `tmap` package, which was introduced during the course and turned out especially intuitive and user-friendly to me:
 
 ```{r pmines, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 library(tmap)
@@ -105,9 +105,9 @@ tmap::tm_shape(base_nat) + tmap::tm_borders(lwd=2) +
 tmap::tm_layout(legend.position = c("left", "bottom"))
 ```
 
-As mentioned above, the state of Minas Gerais somewhat marks the center of the Brazilian mining industry, while significant mining activities are also conducted in the North Region such as in Amapá and Pará. On the map, I therefore added the borders of Minas Gerais (in the south-east) as well as all states of the North Region and, as an Amazon frontier state, Mato Grosso (which is counted to the Central-West Region). The SNL data in total includes 299 active mines, with approximately one third being located in Minas Gerais, one third in the North Region and Mato Grosso, and the last third being spread across the remaining states.
+As mentioned above, the state of Minas Gerais somewhat marks the centre of the Brazilian mining industry, while significant mining activities are also conducted in the North Region such as in Amapá and Pará. On the map, I therefore added the borders of Minas Gerais (in the south-east) as well as all states of the North Region and, as an Amazon frontier state, Mato Grosso (which is counted to the Central-West Region). The SNL data in total includes 299 active mines, with approximately one third being located in Minas Gerais, one third in the North Region and Mato Grosso, and the last third being spread across the remaining states.
 
-Next, I want to explore whether the two regions of interest differ with respect to mining municipalities overlapping with or being proximate to protected areas, with a specific focus on indigenous land. I therefore zoom into both areas and add a layer on protected areas taken from the World Database on Protected Areas [@unep2020protected]. Note that I merge all protected lands for the two types 'indigenous' and 'other' using `sf::st_union()` (taking some time to calculate!), because many polygons overlap in the raw data. This step also reduces the size of the shapefile.
+Next (and not yet directly related to the econometric framework proposed later), I want to explore whether the northern states and Minas Gerais differ with respect to mining municipalities overlapping with or being proximate to protected areas, with a specific focus on indigenous land. I therefore zoom into both areas and add a layer on protected areas taken from the World Database on Protected Areas [@unep2020protected]. Note that I merge all protected lands for the two types 'indigenous' and 'other' using `sf::st_union()` (taking some time to calculate!), because many polygons overlap in the raw data. This step also reduces the size of the shapefile.
 
 ```{r pa, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 wdpa_bra <- sf::read_sf("wdpa_data/wdpa_bra.shp")
@@ -149,7 +149,7 @@ tmap::tm_layout(main.title = "Minas Gerais", legend.position = c("left", "top"))
 tmap::tm_scale_bar(position=c("right", "bottom"))
 ```
 
-```{r panorth, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+```{r panorth, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
 regs <- c("AC", "AM", "RO", "RR", "AP", "PA", "TO", "MT") # North Region + Mato Grosso
 regs_wdpa <- str_subset(unique(wdpa_bra$SUB_LOC), paste(regs, collapse = "|"))
 
@@ -166,7 +166,7 @@ if (! file.exists("wdpa_data/wdpa_bra_clean_north_indig.shp")){
 }
 ```
 
-```{r pminesnorth, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
+```{r pminesnorth, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
 wdpa_bra_clean_north <- rbind(
   wdpa_bra_clean_north_indig %>% dplyr::mutate("TYPE" = "Indigenous"),
   wdpa_bra_clean_north_other %>% dplyr::mutate("TYPE" = "Other"))
@@ -188,11 +188,11 @@ The first map indicates that there appears to be one cluster of municipalities w
 
 ### Municipality statistics
 
-Socio-economic data at the municipality-level can be accessed from the Brazilian Institute of Geography and Statistics [@ibge2020]. Since I am interested in the 2002-2011 growth period, I will need to assess 2002 and 2011 data and calculate the growth rates for this period. Due to a number of changes of political borders and entities in the past, I have to drop observations affected by a change of borders during the time period covered. (In fact, this can be improved, but it would require more data wrangling than feasible within the scope of the project.) 
+Socio-economic data at the municipality-level can be accessed from the Brazilian Institute of Geography and Statistics [@ibge2020]. Since I am interested in the 2002-2011 growth period, I will need to utilise 2002 and 2011 data and calculate the growth rates for this period. Due to a number of changes of political borders and entities in the past, I have to drop observations affected by a change of borders during the time period covered. (In fact, this can be improved, but it would require more data wrangling than feasible within the scope of the project.) 
 
 #### GDP and growth rates:
 
-For Brazil, the new millenium started with exceptionally high economic growth rates. Its per capita GDP advanced from 2.800 (current) USD in 2002 to 13.200 USD in 2011 [@wb2021gdp]. That is an increase of 370% and corresponds to an average annual growth rate of almost 17%! The BRL has been a stable currency since its last crises in the 1990s, but with comparably high inflation rates (compared to the EUR or USD) of about 7-10% during the period of interest. Hence there was also substantial real GDP growth. This transition was part of a development strategy that was largely fueled by the export of primary commodities (biomass as well as metals and minerals) during a period of growing demand and high commodity prices. One feedback on presenting the project proposal in-class was to think of alternative 'development' indicators, such as the Human Development Index (HDI). Unfortunately, the HDI was not available for Brazil at such granular level. In the following, I want to illustrate this period of economic growth at the municipal-level data. I access and tidy @ibge2020 data and map 2002 per capita GDP (current BRL) and 2002-2011 growth rates:
+For Brazil, the new millenium started with exceptionally high economic growth rates. Its per capita GDP advanced from 2.800 (current) USD in 2002 to 13.200 USD in 2011 [@wb2021gdp]. This is an increase of 370% and corresponds to an average annual growth rate of almost 17%! The BRL has been a stable currency since its last crises in the 1990s, but with comparably high inflation rates (compared to the EUR or USD) of about 7-10% during the period of interest. Hence there was also substantial real GDP growth. This transition was part of a development strategy that was largely fueled by the export of primary commodities (biomass as well as metals and minerals) during a period of growing demand and high commodity prices. One feedback on presenting the project proposal in-class was to think of alternative 'development' indicators, such as the Human Development Index (HDI). Unfortunately, the HDI was not available for Brazil at such granular level. In the following, I want to illustrate this period of economic growth at the level of municipalities. I access and tidy @ibge2020 data and map 2002 per capita GDP (current BRL) and 2002-2011 growth rates:
 
 ```{r gdpdat, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
 dat_ibge_1 <- readxl::read_excel("ibge_data/gdp_munip_1999-2012.xlsx")
@@ -259,19 +259,18 @@ dat_gdp <- dat_gdp %>%
 
 tmap::tm_shape(dat_gdp) + 
   tmap::tm_facets(nrow = 1) + 
-  tmap::tm_borders(lwd=0.1, alpha=0.1) + 
   tmap::tm_fill(col = c("pib_total", "g_cap"), n=8, style="quantile", palette = "-magma", title = "") +
   tmap::tm_layout(legend.position = c("left", "bottom"),
                   panel.labels=c("2002 per capita GDP (current BRL)", "2002-2011 growth rate (%)"))
 ```
 
-On the left panel, the 2002 per capita GDP map with income groups being eight equally sized quantiles, we see that there were substantial differences in income across Brazilian municipalities. Many of the poorest communities are located in the Northeast Region, most notably the state of Piauí, while municipalities along the eastern coastline, in the São Paulo and Rio de Janeiro states and in the very south tend to be richest. Note that there appear to be extreme outliers at the top of the municipal income distribution. Also, important for contextualisation and against the backdrop of rather high inflation rates, note that the extremely low numbers for the bottom municipal GDP levels correspond to *current* BRL levels.
+The left map indicates 2002 per capita GDP, with municipalities being grouped into eight equally sized quantiles. We see that there were substantial differences in income across Brazilian municipalities. Many of the poorest communities are located in the Northeast Region, most notably the state of Piauí, while municipalities along the eastern coastline, in the São Paulo and Rio de Janeiro states and in the very south tend to be richest. Note that there appear to be extreme outliers at the top of the municipal income distribution. Also, important for contextualisation and against the backdrop of rather high inflation rates, note that the extremely low numbers for the bottom municipalities correspond to *current* BRL levels.
 
-The map on the right panel indicates 2002-2011 per capita GDP growth rates at the municipality level, again grouping the municipalities in eight quantiles. Here, besides a cluster of high growth in the north-east, a spatial pattern is less clearly visible. Interestingly, and recalling the national per capita GDP growth of 370%, seven quantiles show growth rates below this national average. Similar to the left panel, the top quantile again includes extreme outliers. Moreover, only the bottom quantile contains municipalities with decreasing GDP.
+The map on the right indicates 2002-2011 per capita GDP growth rates at the municipality level, again grouping the municipalities in eight quantiles. Here, besides a cluster of high growth in the north-east, a spatial pattern is less clearly visible. Interestingly, recalling the national per capita GDP growth of 370% means that seven quantiles show growth rates below this national average. Similar to the left panel, the top quantile again includes extreme outliers. Moreover, only the bottom quantile contains municipalities with decreasing GDP.
 
 #### Population and growth rates:
 
-Population dynamics are frequently linked to economic growth. In fact, population growth is an essential part in economic growth theory, at least at the level of national entities. Therefore, I accessed municipal population data from @ibge2020. In the left panel, I map 2002 population per municipality, and the right panel indicates 2002-2011 population growth:
+Population dynamics are frequently linked to economic growth. In fact, population growth has an essential part in economic growth theory. Therefore, I accessed municipal population data from @ibge2020. Here, I map 2002 population per municipality, and 2002-2011 population growth:
 
 ```{r popmap, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
 dat_pop <- dat_ibge %>% dplyr::filter(ano == 2002)
@@ -288,7 +287,6 @@ dat_pop <- dat_pop %>%
 
 tmap::tm_shape(dat_pop) + 
   tmap::tm_facets(nrow = 1) + 
-  tmap::tm_borders(lwd=0.1, alpha=0.1) + 
   tmap::tm_fill(col = c("pop", "g_pop"), n=8, style="quantile", title = "") +
   tmap::tm_layout(legend.position = c("left", "bottom"),
                   panel.labels=c("2002 population", "2002-2011 population growth"))
@@ -296,7 +294,7 @@ tmap::tm_shape(dat_pop) +
 
 #### Sectoral structure:
 
-Another important determinant of economic development and hence frequently part of growth models is the industry mix, usually considered in terms of proxy variables such as the gross value added (GVA) or the employment in major economic sectors. @ibge2020 reports the GVA in 4 economic sectors: agriculture, industry, services, and the public sector, from which I calculated the respective share of the total GVA:
+Another important determinant of economic development and hence frequently part of growth models is the industry mix, usually considered in terms of proxy variables such as the gross value added (GVA) or the employment in distinct economic sectors. @ibge2020 reports the GVA in 4 economic sectors: agriculture, industry, services, and the public sector, from which I calculated the respective share of the total GVA:
 
 ```{r sectormap, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
 dat_sect <- dat_ibge %>% dplyr::filter(ano == 2002) %>% 
@@ -312,20 +310,19 @@ dat_sect <- base_mun %>% dplyr::left_join(dat_sect, by = c("code_mn" = "cod_muni
 
 tmap::tm_shape(dat_sect) + 
   tmap::tm_facets(nrow = 2) + 
-  tmap::tm_borders(lwd=0.1, alpha=0.1) + 
   tmap::tm_fill(col = c("vab_agropecuaria_perc", "vab_industria_perc", "vab_servicos_exclusivo_perc", "vab_adm_publica_perc"), 
                 n=8, style="quantile", title = "", palette = "-magma") +
   tmap::tm_layout(legend.position = c("left", "bottom"),
                   panel.labels=c("2002 GVA acgriculture (%)", "2002 GVA industry (%)", "2002 GVA services (%)", "2002 GVA public sector (%)"))
 ```
 
-What we learn from these maps is that the sectoral structure also varies strongly within Brazil - or at least it did in 2002. There also appears to occur some spatial clustering: The acrigultural sector is especially dominant along the Amazon frontier areas in the Central-West Region, while it is of minor importance in the metropolitan areas around São Paulo and Rio de Janeiro. There, it is the industry and service sectors that contribute most to the total GVA. The GVA in public sector map shows that, relative to the total economic activity, munipalities in the very west of Brazil as well as the Northeast Region have clearly higher public shares than elsewhere. 
+What we learn from these maps is that the sectoral structure varied strongly within Brazil. There also appeared to occur some spatial clustering: The agricultural sector was especially dominant along the Amazon frontier areas in the Central-West Region, while it was of minor importance in the metropolitan areas around São Paulo and Rio de Janeiro. There, it were the industry and service sectors that contributed most to the total GVA. The GVA in public sector map shows that, relative to the total economic activity, municipalities in the very west of Brazil as well as the Northeast Region had clearly higher public shares than elsewhere. 
 
 #### Open issues:
 
-During this exploration phase, where I tried to access and illustrate important municipal-level data, a number of issues arose. 
+During this exploration phase, where I tried to access and illustrate important municipality-level data, a number of issues arose: 
 
-1. Mining operations data: Until now, all 299 observations regarding the locations of active mining projects reflect the *current* state. As it will become clearer shortly, the growth rate modelling would actually require data for the year 2002, the initial year of the observed growth period, in order to circumvent endogeneity issues and to assess a causal link between the establishment of mines and potential changes in economic growth. Unfortunately, no such information is easily available from the SNL data. However, I have already downloaded historical reports for a list of more than 500 Brazilian mines, from which it may be possible to manually compile additional variables on the opening and closure dates of mine sites. Such data could be extremely valuable for further empirical analyses, as it would help creating the setting of a natural experiment, where some municipalities are at some point in time treated (with a mine), while control regions remain unaffected by the mining industry.
+1. Mining operations data: Until now, all 299 observations regarding the locations of active mining projects reflect the *current* state. As it will become clearer shortly, the growth rate modelling would actually require data for the year 2002, the initial year of the observed growth period, in order to circumvent endogeneity issues and to assess a causal link between the establishment of mines and potential changes in economic growth. Unfortunately, no such information is easily available from the SNL data. However, I have already downloaded historical reports for a list of more than 500 Brazilian mines, from which it may be possible to manually compile additional variables on the opening and closure dates of mine sites. Such data could be extremely valuable for further empirical analyses, as it would help creating the setting of a natural experiment, where some municipalities are, at some point in time, treated (with a mine), while control regions remain unaffected by the mining industry.
 
 2. Outliers: GDP data and growth rates show extreme outliers for some cases. Until now, I took the data as is, without any further validity checks. It will certainly be neccessary to investigate the reasons for growth rates up to 8400%. 
 ```{r dataissues, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
@@ -335,7 +332,7 @@ What is more, I noticed that growth rates are very sensitive to the selected gro
 
 3. the option of a spatial panel setting. Such an implementation would require a lot more data wrangling and, of course, an adaption of the econometric framework that is discussed below, but theoretically this would be a feasible exercise.
 
-4. Collecting further explanatory variables: Until now, I only accessed and explored easily available variables. There is no question that the final analysis will need more information such as on municipal-level employment rates and a proxy variable on human capital. However, collecting such data at the sub-national level is not always an easy undertaking.
+4. Collecting further explanatory variables: Until now, I only accessed and explored easily available variables. There is no question that the final analysis will need more information such as on municipality-level employment rates and a proxy variable on human capital. However, collecting such data at the sub-national level is not always an easy undertaking.
 
 ## Spatial connectivity
 
@@ -353,7 +350,7 @@ nb_q <- spdep::poly2nb(base_mun, queen=TRUE)
 summary(nb_q)
 ```
 
-The summary of `nb_q` reveals that the average number of neighbours (adjacent polygons) is 5.9, 14 polygons have only 1 neighbour and the most connected municipality borders 23 neighbours. 2 municipalities (1523 and 3497) are islands and hence, according to this definition, have no neighbours. Since they are only of minor importance and not related to any mining activities at all, I exclude them from the data.
+The summary of `nb_q` reveals that the average number of neighbours (adjacent polygons) is 5.9, 14 polygons have only one neighbour and the most connected municipality borders 23 neighbours. Two municipalities (1523 and 3497) are islands and hence, according to this definition, have no neighbours. Since they are only of minor importance and not related to any mining activities at all, I exclude them from the data.
 
 ```{r neighboursqomit, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 base_mun <- base_mun[-c(1523, 3496),]
@@ -365,18 +362,18 @@ We can now have a look how this neighbourhood definition translates into a map:
 ```{r neighboursq, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
 coords <- sf::st_centroid(sf::st_geometry(base_mun), of_largest_polygon=TRUE)
-plot(nb_q, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.3)
+plot(nb_q, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.2)
 ```
 
 Brazilian municipalities vary extremely in size. While they are smaller the closer they are to the Atlantic Ocean, municipalities towards and within the Amazon are considerably larger. We see on the map that this fact results in a network of neighbours that is differently dense.
 
-Next, I try a  k = 5 nearest neighbours definition using the `spdep::knearneigh()` function:
+Next, I try a  $k = 5$ nearest neighbours definition using the `spdep::knearneigh()` function:
 
 ```{r neighboursn, echo = FALSE, eval = TRUE, message=FALSE,  warning=FALSE}
 nb_5nnb <- spdep::knearneigh(coords, k=5)
 nb_5nnb <- spdep::knn2nb(nb_5nnb, sym=F)
 plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
-plot(nb_5nnb, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.3)
+plot(nb_5nnb, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.2)
 ```
 
 As all municipalities are forced to have exactly 5 neighbours (while the average number of neighbours was 6, with a maximum of 23, for the queen contiguity specification), this map appears less dense.  
@@ -390,14 +387,14 @@ maxdist <- max(unlist(spdep::nbdists(nb_1nnb, coords=coords)))
 
 nb_dist <- spdep::dnearneigh(coords, d1=0, d2=maxdist)
 plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
-plot(nb_dist, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.3)
+plot(nb_dist, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.2)
 ```
 
 The map clearly indicates that the distance bound definition yields an undesirable result, because municipalities are so differently sized, while it is not yet clear which of the other two neighbourhood definitions would be preferable. In fact, this choice is not trivial. What I have seen from spatial analyses before is that researchers usually try to motivate the choice of their definition theoretically, or that they demonstrate that varying spatial weights matrices yield comparable results. Bayesian estimation approaches would, furthermore, allow for leaving the decision on $W$ to a certain extent up to an algorithm [@lesage2009introduction].
 
-For the rest of this analysis, I will proceed with the k = 5 nearest neighbours weights matrix. Robustness checks, where I compare it to the queen contiguity definition and variations in k, are left to a later stage.
+For the rest of this analysis, I will proceed with the $k = 5$ nearest neighbours weights matrix. Robustness checks, where I compare it to the queen contiguity definition and variations in $k$, are left to a later stage.
 
-Since the dimensions of $W$, an $n \times n$ matrix for $n$ spatial observations must exactly fit to the $n \times k$ design matrix, I now make sure that NA entries of the variable of interest are excluded from the data and then compute a final weights matrix:
+Since the dimensions of $W$, an $n \times n$ matrix for $n$ spatial observations must exactly fit to the $n \times k$ design matrix, I now make sure that `NA` entries of the variable of interest are excluded from the data and then compute a final weights matrix:
 
 ```{r dims, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 dat_gdp <- dat_gdp[!is.na(dat_gdp$pib_per_capita),]
@@ -413,18 +410,18 @@ nb_5nnb <- spdep::knn2nb(nb_5nnb, sym=F)
 
 We speak of *spatial autocorrelation*, if a systemic spatial pattern of a specific characteristic happens to occur, i.e. features are not randomly distributed across space. Positive spatial autocorrelation describes a situation where similar observations are closer to each other, and in the case of negative spatial autocorrelation close observations are more dissimilar than those locations further away. For real world spatial data, it is rare that the data shows complete spatial randomness. 
 
-In a classical linear regression framework, we assume independence of observations, which is hence likely to be a violated assumtion when using spatial data. Therefore, it is crucial to detect such spatial dependence and to apply methods that allow addressing this issue. 
+In a classical linear regression framework, we assume independence of observations, which is hence likely to be a violated assumption when using spatial data. Therefore, it is crucial to detect such spatial dependence and to apply methods that allow addressing this issue. 
 
 Examining the maps above already allows for a first intuition about the presence of spatial clustering. However, this may not always be absolutely clear and we might want to test for and quantify the strength of spatial autocorrelation. The most common measure for global (i.e. providing a single value representing the data) spatial autocorellation is the Moran's I statistic. It essentially evaluates how similar observations at location $i$ deviate from the mean compared to neighbouring regions of that location $i$ compare to the mean. Formally, it is defined as
 
 $$I = \frac{\sum_{i=1}^n\sum_{j=1}^n w_{i,j} (x_i-\bar{x}) (x_j-\bar{x})}{(\sum_{i=1}^n\sum_{j=1}^n w_{i,j}) \sum_{i=1}^n(x_i-\bar{x})^2}$$
 
-where $x_i$ and $x_j$ are observations at locations $i$ and $j$, and $w_i,j$ is the weight that determines the relationship between $i$ and $j$. We can derive the expected value of $I$, which would correspond to a random distributions of observations
+where $x_i$ and $x_j$ are observations at locations $i$ and $j$, and $w_{i,j}$ is the weight that determines the relationship between $i$ and $j$. We can derive the expected value of $I$, which would correspond to a random distribution of observations,
 
 $$E(I) = \frac{-1}{n-1}$$
-and test whether $I$ is significantly different from $E(I)$.
+, and test whether $I$ is significantly different from $E(I)$.
 
-Using the neighbourhood definition from above (k = 5 nearest neighbours), I now compute the Moran's I for my Brazilian data using `spdep::moran.test()`. Before that, I supplement the neighbours list with spatial weights (`spdep::nb2listw()`) applying row standardisation by setting `style="W"`.
+Using the neighbourhood definition from above, I now compute the Moran's I for my Brazilian data using `spdep::moran.test()`. Before that, I supplement the neighbours list with spatial weights (`spdep::nb2listw()`) applying row standardisation by setting `style="W"`.
 
 ```{r moransi, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 lwW <- spdep::nb2listw(nb_5nnb, style="W")
@@ -458,14 +455,14 @@ out
 
 All variables considered are found to exhibit significant positive spatial autocorrelation. I find weakest spatial dependence for GDP growth rates (0.12), and most considerable spatial autocorrelation for GVA in the public sector (0.73).
 
-Another useful tool for investigating spatial autocorrelation drawing Moran scatterplots [@anselin1996moran], where the variable of interest is plotted against its spatial lag (i.e. the average outcome for that variable across neighbouring regions): 
+Another useful tool for investigating spatial autocorrelation is drawing Moran scatterplots [@anselin1996moran], where the variable of interest is plotted against its spatial lag (i.e. the average outcome for that variable across neighbouring regions): 
 
 ```{r moranplots, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE, fig.show="hold", out.width="50%"}
 spdep::moran.plot(dat_gdp$pib_per_capita, listw=lwW)
 spdep::moran.plot(dat_gdp$g_cap, listw=lwW)
 ```
 
-Moran's I is a global statistic, and its strength is that is summarises the data with a single value. However, it does not give any insights which observations are similar or different to observations in their neighbourhood. Here, the Local Moran's I can help. Its nature is similar to the global statistic, but each observation receives its own $I$ statistic, as well as its own expected value and variance. Without going into detail here, it essentially evaluates how each observation deviates from the mean compared to how its neighbouring observations compare to the mean. The significance and direction of the LocaL Moran's I can then be nicely illustrated on a map:
+Moran's I is a global statistic, and its strength is that is summarises the data by a single value. However, it does not give any insights which observations are similar or different to observations in their neighbourhood. Here, the Local Moran's I can help. Its nature is similar to the global statistic, but each observation receives its own $I$ statistic, as well as its own expected value and variance. Without going into detail here, it essentially evaluates how each observation deviates from the mean compared to how its neighbouring observations compare to the mean. The significance and direction of the Local Moran's I can then be nicely illustrated on a map:
 
 ```{r localmoran, echo = TRUE, eval = TRUE, message=FALSE,  warning=FALSE}
 localm_pib <- spdep::localmoran(dat_gdp$pib_per_capita, listw=lwW, alternative = "two.sided") %>% 
@@ -489,7 +486,7 @@ localm <- dplyr::left_join(localm_pib, localm_g, by = "code_mn") %>%
 tmap::tm_shape(base_nat) + tmap::tm_borders(lwd=2) +
 tmap::tm_shape(localm) + 
   tmap::tm_facets(nrow = 1) + 
-  tmap::tm_borders(lwd=0.1, alpha=0.1) +
+  tmap::tm_borders(lwd=0.1, alpha=0.4) +
   tmap::tm_fill(col = c("lsa_pib", "lsa_g"), style = "cat", palette = "Set1",
                 title = "Local Moran's I",
                 colorNA = "white", textNA = "not significant",) +
@@ -504,11 +501,11 @@ What I find is that 2002 municipal GDP, for example, has large hotspots of posit
 Typical growth regressions, as motivated in the literature on convergence across countries, regress growth rates of countries or regions on their capital stock (usually GDP) at the initial period as well as a number of further determinants of growth [@barro1991economic]. Typically, these include information such as on population growth, human capital stock, sectoral structure and employment [@crespo2014determinants]. These variables likely exhibit spatial dependence, implying that the assumption of independence between observations - typically assumed in classical linear regressions - is violated. In fact, I demonstrated in the sections above that the variables so-far collected for my research are spatially autocorellated. Spatial econometric models explicitly consider spatial dependence. @lesage2008growth propose following Spatial Durbin Model (SDM) for growth regressions:
 
 $$\boldsymbol{y} = \rho \boldsymbol{Wy} + \boldsymbol{X\beta} + \boldsymbol{WX \theta} + \boldsymbol{u}$$
-In my analysis, the dependent variable $\boldsymbol{y}$ denotes an $n \times 1$ vector of regional economic growth rates for $n$ Brazilian municipalities. $\boldsymbol{X}$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period. $\mathbf{W}$ denotes the spatial weights or connectivity matrix, allowing for parsimonious treatment of spatial dependence [@anselin2013spatial]. It is an $n \times n$, non-negative, row-standardised matrix with $w_{ii} = 0$. Its elements are used to specify the spatial dependence structure among the observations, i.e. $w_{ij} > 0$ if region $j$ is in a neighbourhood relationship with region $i$ ($i, j = 1, \dots, n$). As illustrated above, I employ a k = 5 nearest neighbours specification for the definition of neighbourhood. The $k \times 1$ vectors $\boldsymbol{\beta}$ and $\boldsymbol{\theta}$ correspond to $\boldsymbol{X}$ and $\boldsymbol{WX}$ respectively, and $\rho \in (-1, 1)$ captures the strength of spatial autocorrelation. The random error term $\boldsymbol{u}$ is assumed to be constant and normally distributed.
+In my analysis, the dependent variable $\boldsymbol{y}$ denotes an $n \times 1$ vector of regional economic growth rates for $n$ Brazilian municipalities. $\boldsymbol{X}$ is an $n \times k$ matrix of $k$ exogenous regional characteristics in the initial period. $\mathbf{W}$ denotes the spatial weights or connectivity matrix, allowing for parsimonious treatment of spatial dependence [@anselin2013spatial]. It is an $n \times n$, non-negative, row-standardised matrix with $w_{ii} = 0$. Its elements are used to specify the spatial dependence structure among the observations, i.e. $w_{ij} > 0$ if region $j$ is in a neighbourhood relationship with region $i$ ($i, j = 1, \dots, n$). As illustrated above, I employ a $k = 5$ nearest neighbours specification for the definition of neighbourhood. The $k \times 1$ vectors $\boldsymbol{\beta}$ and $\boldsymbol{\theta}$ correspond to $\boldsymbol{X}$ and $\boldsymbol{WX}$ respectively, and $\rho \in (-1, 1)$ captures the strength of spatial autocorrelation. The random error term $\boldsymbol{u}$ is assumed to be constant and normally distributed.
 
 Note that the SDM collapses into altered forms of spatial model types if either $\lambda = 0$ or $\rho = 0$. The former is referred to as the spatial autoregressive model (SAR). The latter type represents the so-called spatial lag of X model (SLX). For the case of both parameters being zero, the model collapses to a classical linear model.
 
-For this report, I use 2002-2011 growth rates of Brazilian municipalities (in %) as the dependent variable. The set of explanatory variables consists of the municipalities' GDP in 2002 (current BRL, logged), 2002-2011 population growth (%), the GVA in the agriculture and industry sector (%, share of total GVA), as well as a binary indicator whether or not there are mining operations ongoing in the respective municipality. As noted above, this indicator is unfortunately not yet representing the *initial* year of the analysed growth period - an issue that still has to be sorted out, but requires arduous manual work.
+For this report, I use 2002-2011 growth rates of Brazilian municipalities (in %) as the dependent variable. The set of explanatory variables consists of the municipalities' GDP in 2002 (current BRL, logged), 2002-2011 population growth (%), the GVA in agriculture and industry (%, share of total GVA), as well as a binary indicator whether or not there are mining operations ongoing in the respective municipality. As noted above, this indicator is unfortunately not yet representing the *initial* year of the analysed growth period - an issue that still has to be sorted out, but requires arduous manual work.
 
 I first run a classical linear model without considering any kind of spatial dependence. Subsequently, I estimate SAR-, SLX- and SDM-type spatial models. Note that although originally intended to use artificial data for this report, I decided to start right away with real data for this still small and preliminary model.
 
@@ -542,7 +539,7 @@ m <- g_cap ~ log(pib_per_capita) + g_pop + mine + vab_agropecuaria_perc + vab_in
 m_ols <- lm(formula = m, data = reg_data); summary(m_ols)
 ```
 
-I find a negative effect of the initial capital stock, which is in accordance with the idea of convergence, i.e. poor regions experience higher growth rates. The mining indicator shows a strong positive influence of mining operations on economic growth. The third covariate that appears to have a significant positive influence is GVA in the industry sector. To my surprise, population growth and - even though Brazil is a major exporter of biomass - GVA in agriculture yield insignificant coefficients. Possible explanations why the relative size of the agricultural sector is of little importance may be that first that I measure the effect of the sector's size in 2002 on 2002-2011 growth, while maybe largest dynamics in this sector only took place after 2002, and second it may as well be the case that the revenues from agriculture do not stay within the respective municipalities. 
+I find a negative effect of the initial capital stock, which is in accordance with the idea of convergence, i.e. poor regions experience higher growth rates. The mining indicator shows a strong positive influence of mining operations on economic growth. The third covariate that appears to have a significant (and positive) influence is GVA in the industry sector. To my surprise, population growth and - even though Brazil is a major exporter of biomass - GVA in agriculture yield insignificant estimates. Possible explanations why the relative size of the agricultural sector is of little importance may be first that I measure the effect of the sector's size in 2002 on 2002-2011 growth, while maybe largest dynamics in this sector only took place after 2002, and second it may as well be the case that the revenues from agriculture do not stay within the respective municipalities. 
 
 Yet, these results must be viewed with caution. First, we can assume from the analysis before that the model is misspecified due to spatial dependence. Second, the model has a surprisingly low goodness of fit ($R^2 = 0.02$). It might very well be that important determinants of growth are omitted. While I will have to live with the latter problem for now, it is the issue of spatial dependence that I want to address in the further modelling.
 
@@ -574,7 +571,7 @@ m_sdm <- spatialreg::lagsarlm(formula = m, data = reg_data, listw = lwW, Durbin 
 summary(m_sdm)
 ```
 
-Comparing all four models, what I notice first is that there are no crucial differences such as switches of the directions or changes regarding the statistical significance of effects. When looking closer, it becomes, however, apparent that OLS overestimates the effect of the presence of a mine, because it does not take into consideration spatial spillovers. A similar behavior is observed for GVA in industry. For the models that consider a spatially lagged dependent variable (SAR and SDM), I find a highly significant spatial autoregressive parameter of approximately 0.24. SLX and SDM further show that the spatial lags of initial GDP, the presence of mining, and GVA in industry have significantly positive effects. Another interesting finding, which would not emerge from a non-spatial model, is that besides convergence, i.e. a negative effect for initial capital, there is a positive coefficient for the spatial lag of initial capital. This means that initially rich municipalities grow slower, but also that there is a positive growth effect for regions that have richer municipalities as neighbours.
+Comparing all four models, what I notice first is that there are no crucial differences such as switches of the directions or changes regarding the statistical significance of effects. When looking closer, it becomes, however, apparent that OLS overestimates the effect of the presence of a mine, because it does not take into consideration spatial spillovers. A similar behaviour is observed for GVA in industry. For the models that consider a spatially lagged dependent variable (SAR and SDM), I find a highly significant spatial autoregressive parameter of approximately 0.24. SLX and SDM further show that the spatial lags of initial GDP, the presence of mining, and GVA in industry have significantly positive effects. Another interesting finding, which would not emerge from a non-spatial model, is that besides convergence, i.e. a negative effect for initial capital, there is a positive coefficient for the spatial lag of initial capital. This means that initially rich municipalities grow slower, but also that there is a positive growth effect for regions that have richer municipalities as neighbours.
 
 The first advantage of spatial modelling is of technical nature, i.e. it is a way of improving situations where model residuals are correlated. In the OLS model, I found such autocorrelation. Let's check, if this has improved:
 
@@ -602,7 +599,7 @@ spdep::impacts(m_sdm, listw = lwW)
 
 SAR and SDM yield comparable direct and indirect impact estimates. Regarding the variable of interest, presence of mining, I find a strong positive direct effect for both models, and a more moderate positive indirect in the SAR than in the SDM. The control variables behave very similarly, except for the initial capital variable, where the SAR is not able to detect the sign switch between direct and indirect effect.
 
-Lastly, I want to contextualise these preliminary results briefly with regard to the research interest. From a first impression, it seems as if mining activities indeed positively related to GDP growth for the mining municipalities, and their neighbours. Yet, this is only one part of the story. While 2002-2011 was a general period of economic growth, it will be interesting to find out what happened to mining regions after the commodity boom. Did they develop differently from non-mining area? Did they experience more severe recessions? Generally speaking, it would be interesting to look at a variety of growth horizons. Also, a panel setting could lead to further insights. In addition, I want to stress that, even if mines translate into economic growth rates, there are many other social and environmental aspects to be taken into consideration before jumping to the conclusion that mines are, in general, a good thing.
+Lastly, I want to contextualise these preliminary results briefly with regard to the research interest. From a first impression, it seems as if mining activities indeed positively related to GDP growth for the mining municipalities, and their neighbours. Yet, this is only one part of the story. While 2002-2011 was a general period of economic growth, it will be interesting to find out what happened to mining regions after the commodity boom. Did they develop differently from non-mining areas? Did they experience more severe recessions? Generally speaking, it would be interesting to look at a variety of growth horizons. Also, a panel setting could lead to further insights. In addition, I want to stress that, even if mines translate into economic growth rates, there are many other social and environmental aspects to be taken into consideration before jumping to the conclusion that mines are, in general, a good thing.
 
 ### Bayesian MCMC approaches for spatial econometric models
 
