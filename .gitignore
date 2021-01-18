@@ -56,6 +56,8 @@ project/wdpa_data
 # intermediate data
 project/ibge_data/pop_municip_2002.xls
 project/ibge_data/pop_municip_2011.xls
+project/data_matrix.Rdata
+project/weights_matrix.Rdata
 
 # preparing restricted SNL data
 project/prepare_data.R
