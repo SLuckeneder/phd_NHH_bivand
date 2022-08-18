@@ -50,20 +50,21 @@ bra_mines <- bra_mines %>%
   dplyr::mutate(mine_count = ifelse(mine_count == 0, NA, mine_count))
 # wdpa_bra <- sf::read_sf("project/wdpa_data/wdpa_bra.shp")
 
-# library(tmap)
+library(tmap)
 
 # regs <- c("MG", "AC", "AM", "RO", "RR", "AP", "PA", "TO", "MT")
-# 
-# tmap::tm_shape(bra_mines) + 
-#   tmap::tm_borders(lwd=0.3, alpha=0.4) +
-#   tmap::tm_fill(col = "mine_count", style = "pretty", as.count = TRUE, 
-#                 colorNA = "white", textNA = "0",
-#                 palette = "-viridis",
-#                 title = "No. of active mines (n = 299)", legend.reverse = TRUE) +
-#   tmap::tm_shape(base_sta %>% dplyr::filter(abbrv_s %in% regs)) + tmap::tm_borders(lwd=1) +
-#   tmap::tm_shape(base_nat) + tmap::tm_borders(lwd=2) +
-#   tmap::tm_layout(legend.position = c("left", "bottom"))
 
+p <- tmap::tm_shape(bra_mines) +
+  tmap::tm_borders(lwd=0.3, alpha=0.4) +
+  tmap::tm_fill(col = "mine_count", style = "pretty", as.count = TRUE,
+                colorNA = "white", textNA = "0",
+                palette = "-viridis",
+                title = "No. of active mines (n = 299)", legend.reverse = TRUE) +
+  # tmap::tm_shape(base_sta %>% dplyr::filter(abbrv_s %in% regs)) + tmap::tm_borders(lwd=1) +
+  tmap::tm_shape(base_sta) + tmap::tm_borders(lwd=1) +
+  tmap::tm_shape(base_nat) + tmap::tm_borders(lwd=2) +
+  tmap::tm_layout(legend.position = c("left", "bottom"))
+tmap_save(p, "project/mine_data/bra_mines_map.png")
 
 
 
@@ -196,12 +197,15 @@ dat_growth <- dat_ibge %>% dplyr::filter(ano %in% c(from_yr, to_yr)) %>%
 dat_gdp <- dat_gdp %>% 
   dplyr::left_join(dat_growth, by = c("code_mn" = "cod_municipio"))
 
-# tmap::tm_shape(dat_gdp) +
-#   tmap::tm_facets(nrow = 1) +
-#   tmap::tm_fill(col = c("pib_total", "g_cap"), n=8, style="quantile", palette = "-magma", title = "") +
-#   tmap::tm_layout(legend.position = c("left", "bottom"),
-#                   panel.labels=c("2002 per capita GDP (current BRL)", "2002-2011 growth rate (%)"))
-
+p <- tmap::tm_shape(dat_gdp) +
+  tmap::tm_facets(nrow = 1) +
+  tmap::tm_fill(col = c("pib_total", "g_cap"), n=8, style="quantile", palette = "-magma", title = "") +
+  tmap::tm_layout(legend.position = c("left", "bottom"),
+                  panel.labels=c("2011 per capita GDP (current BRL)", "2011-2017 growth rate (%)"),
+                  panel.label.bg.color = "white")
+  # tmap::tm_layout(legend.position = c("left", "bottom"),
+  #                 panel.labels=c("2002 per capita GDP (current BRL)", "2002-2011 growth rate (%)"))
+tmap_save(p, "project/mine_data/bra_gdp_map.png")
 
 
 dat_pop <- dat_ibge %>% dplyr::filter(ano == from_yr)
@@ -247,7 +251,7 @@ dat_sect <- base_mun %>% dplyr::left_join(dat_sect, by = c("code_mn" = "cod_muni
 
 library(spdep)
 
-# nb_q <- spdep::poly2nb(base_mun, queen=TRUE)
+# nb_q <- spdep::poly2nb(dat_gdp, queen=TRUE)
 # summary(nb_q)
 # base_mun <- base_mun[-c(1523, 3496),]
 
@@ -262,7 +266,7 @@ plot(sf::st_geometry(base_mun), border="grey", lwd=0.5)
 plot(nb_5nnb, coords=st_coordinates(coords), add=TRUE, points=FALSE, lwd=0.2)
 
 lwW <- spdep::nb2listw(nb_5nnb, style="W")
-save(lwW, file = "project/weights_matrix.Rdata")
+save(lwW, file = paste0("project/weights_matrix_", from_yr, "_", to_yr, ".Rdata"))
 
 # spatial autocorrelation -------------------------------------------------
 
@@ -346,7 +350,7 @@ reg_data <- reg_data %>%
 
 # export data
 data <- reg_data %>% dplyr::mutate(int = 1) %>% dplyr::select(1, 9, 8, 2, 3, 4, 5, 6) %>% as.matrix()
-save(data, file = "project/data_matrix.Rdata")
+save(data, file = paste0("project/data_matrix_", from_yr, "_", to_yr, ".Rdata"))
 
 # OLS
 m <- g_cap ~ log(pib_per_capita) + g_pop + mine + vab_agropecuaria_perc + vab_industria_perc + vab_servicos_exclusivo_perc
